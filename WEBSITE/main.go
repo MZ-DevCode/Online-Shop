@@ -15,6 +15,9 @@ func main() {
 func handlerReg(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		template.ParseFiles("/templates/register.html")
+	}
+
+	if r.Method == "POST" {
 		var name string = r.FormValue("username")
 		var password string = r.FormValue("password")
 		var repeatPassword string = r.FormValue("password")
