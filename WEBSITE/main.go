@@ -14,7 +14,13 @@ func main() {
 
 func handlerReg(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		template.ParseFiles("/templates/register.html")
+		tmpl, err := template.ParseFiles("templates/register.html")
+		if err != nil {
+			http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+			return
+		}
+		tmpl.Execute(w, nil)
+		return
 	}
 
 	if r.Method == "POST" {
