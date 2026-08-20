@@ -1,22 +1,39 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="../static/style.css">
-        <title>WEBSITE</title>
-    </head>
-    <body>
-        <div class="back">
-        <div class="block">
-            <h2>Registration</h2>
-            <form action="/register" method="post">
-                <input type="text" name="username" placeholder="Name" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <input type="password" name="repeat_password" placeholder="Repeate password" required>
-                <button type="submit">Register</button>
-            </form>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация | Онлайн-магазин</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h2>Регистрация</h2>
+
+        <form action="/register" method="POST">
+            <div class="form-group">
+                <label>Имя пользователя</label>
+                <input type="text" name="username" placeholder="user" required>
+            </div>
+
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <div class="form-group">
+                <label>Повторите пароль</label>
+                <input type="password" name="repeat_password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit">Создать аккаунт</button>
+        </form>
+
+        <div class="login-link">
+            Уже есть аккаунт? <a href="/login">Войти</a>
         </div>
-        </div>
-    </body>
+    </div>
+
+</body>
 </html>
