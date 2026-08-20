@@ -23,5 +23,6 @@ func handlerReg(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Пароли не совпадают", http.StatusBadRequst)
 			return
 		}
+
 	}
 }
