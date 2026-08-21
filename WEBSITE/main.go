@@ -1,16 +1,13 @@
 package main
 
 import (
-	"html/template"
+	"WEBSITE/handlers"
 	"net/http"
 )
 
 func main() {
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/register", handlerReg)
+	mux.HandleFunc("/register", handlers.RegisterHandler)
 	http.ListenAndServe(":8080", mux)
-}
-
-
 }

@@ -1,4 +1,11 @@
-func handlerReg(w http.ResponseWriter, r *http.Request) {
+package handlers
+
+import (
+	"html/template"
+	"net/http"
+)
+
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/register.html")
 		if err != nil {
@@ -10,12 +17,12 @@ func handlerReg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "POST" {
-		var name string = r.FormValue("username")
-		var password string = r.FormValue("password")
-		var repeatPassword string = r.FormValue("password")
-
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+		repeatPassword := r.FormValue("repeatPassword")
 		if password != repeatPassword {
 			http.Error(w, "Пароли не совпадают", http.StatusBadRequest)
 			return
 		}
 	}
+}
