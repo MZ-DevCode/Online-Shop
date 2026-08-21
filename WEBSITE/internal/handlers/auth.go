@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os/user"
 )
 
 // RegisterHandler обрабатывает регистрацию нового пользователя
@@ -60,6 +61,32 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, "Ошибка регистрации", http.StatusBadRequest)
 			return
+		}
+	}
+
+	func LoginHandler(w http.ResponseWriter, r *http.Request){
+		if r.Method == "GET" {
+			tmpl, err := template.ParseFiles("templates/login.html")
+			if err != nil {
+				log.Println("Ошибка загрузки шаблона:", err)
+				http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+				return
+			}
+			tmpl.Execute(w, nil)
+			return
+		}
+
+		if r.Method == "POST"{
+			username := r.FormValue("username")
+			password := r.FormValue("password")
+
+			query := database.DB.Query("SELECT password FROM users WHERE username = ?")
+			passw, err := database.DB.Exec(query, user.Username)
+
+			if passw != password{
+				http.Error(w, "Неверный пароль", http.StatusBadRequest)
+			}
+
 		}
 	}
 }
