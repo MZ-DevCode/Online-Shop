@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"WEBSITE/internal/utils"
 	"html/template"
 	"net/http"
 )
@@ -22,6 +23,12 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		repeatPassword := r.FormValue("repeatPassword")
 		if password != repeatPassword {
 			http.Error(w, "Пароли не совпадают", http.StatusBadRequest)
+			return
+		}
+
+		hashedPassword, err := utils.HashPassword(password)
+		if err != nil {
+			http.Error(w, "Ошибка шифрования пароля", http.StatusInternalServerError)
 			return
 		}
 	}
