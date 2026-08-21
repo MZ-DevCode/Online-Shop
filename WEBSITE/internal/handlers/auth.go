@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"WEBSITE/internal/database"
+	"WEBSITE/internal/models"
 	"WEBSITE/internal/utils"
 	"html/template"
 	"log"
@@ -49,8 +50,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		user := models.User{
+			Username: username,
+			Password: hashedPassword,
+		}
+
 		query := "INSERT INTO users (username, password) VALUES (?, ?)"
-		_, err = database.DB.Exec(query, username, hashedPassword)
+		_, err = database.DB.Exec(query, user.Username, user.Password)
 		if err != nil {
 			http.Error(w, "Ошибка регистрации", http.StatusBadRequest)
 			return
