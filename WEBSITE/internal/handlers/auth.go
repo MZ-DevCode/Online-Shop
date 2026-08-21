@@ -8,6 +8,20 @@ import (
 	"net/http"
 )
 
+// RegisterHandler обрабатывает регистрацию нового пользователя
+// @Summary Регистрация пользователя
+// @Description Отображает форму регистрации (GET) или создает нового пользователя (POST)
+// @Tags auth
+// @Accept application/x-www-form-urlencoded
+// @Produce text/html
+// @Param username formData string true "Имя пользователя"
+// @Param password formData string true "Пароль"
+// @Param repeatPassword formData string true "Повтор пароля"
+// @Success 200 {string} string "HTML страница или успешная регистрация"
+// @Failure 400 {string} string "Ошибка валидации или несовпадение паролей"
+// @Failure 500 {string} string "Внутренняя ошибка сервера"
+// @Router /register [get]
+// @Router /register [post]
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/register.html")

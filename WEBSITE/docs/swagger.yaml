@@ -5,5 +5,84 @@ info:
   description: бэкенд интернет-магазин
   title: Интернет-магазин API
   version: "1.0"
-paths: {}
+paths:
+  /register:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Отображает форму регистрации (GET) или создает нового пользователя
+        (POST)
+      parameters:
+      - description: Имя пользователя
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Пароль
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Повтор пароля
+        in: formData
+        name: repeatPassword
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML страница или успешная регистрация
+          schema:
+            type: string
+        "400":
+          description: Ошибка валидации или несовпадение паролей
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Регистрация пользователя
+      tags:
+      - auth
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Отображает форму регистрации (GET) или создает нового пользователя
+        (POST)
+      parameters:
+      - description: Имя пользователя
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Пароль
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Повтор пароля
+        in: formData
+        name: repeatPassword
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML страница или успешная регистрация
+          schema:
+            type: string
+        "400":
+          description: Ошибка валидации или несовпадение паролей
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Регистрация пользователя
+      tags:
+      - auth
 swagger: "2.0"
