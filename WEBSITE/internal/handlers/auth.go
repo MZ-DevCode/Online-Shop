@@ -3,6 +3,8 @@ package handlers
 import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/utils"
+	"database/sql"
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -55,5 +57,47 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Ошибка регистрации", http.StatusBadRequest)
 			return
 		}
+	}
+}
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		tmpl, err := template.ParseFiles("templates/login.html")
+		if err != nil {
+			log.Println("Ошибка загрузки шаблона:", err)
+			http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+			return
+		}
+
+		tmpl.Execute(w, nil)
+		return
+	}
+
+	if r.Method == "POST" {
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		var hashedPassword string
+		query := "SELECT password FROM users WHERE username = $1"
+		err := database.DB.QueryRow(query, username).Scan(&hashedPassword)
+
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				log.Println("Ошибка поиска пользователя:", err)
+				http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
+				return
+			}
+
+			http.Error(w, "Ошибка поиска пользователя", http.StatusInternalServerError)
+			return
+		}
+
+		if !utils.CheckPasswordHash(password, hashedPassword) {
+			log.Println("Неверный пароль для пользователя:", username)
+			http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
+			return
+		}
+
+		w.Write([]byte("Успешная авторизация!"))
 	}
 }
