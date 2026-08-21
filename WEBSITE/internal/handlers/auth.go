@@ -4,6 +4,7 @@ import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/utils"
 	"html/template"
+	"log"
 	"net/http"
 )
 
@@ -11,6 +12,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/register.html")
 		if err != nil {
+			log.Println("Ошибка загрузки шаблона:", err)
 			http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
@@ -33,10 +35,10 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		query := "INSERT INTO (username, password) VALUES (?, ?)"
+		query := "INSERT INTO users (username, password) VALUES (?, ?)"
 		_, err = database.DB.Exec(query, username, hashedPassword)
 		if err != nil {
-			http.Error(w, "Ошибка регистрации")
+			http.Error(w, "Ошибка регистрации", http.StatusBadRequest)
 			return
 		}
 	}
