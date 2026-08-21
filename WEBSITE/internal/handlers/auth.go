@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"WEBSITE/internal/database"
 	"WEBSITE/internal/utils"
 	"html/template"
 	"net/http"
@@ -29,6 +30,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		hashedPassword, err := utils.HashPassword(password)
 		if err != nil {
 			http.Error(w, "Ошибка шифрования пароля", http.StatusInternalServerError)
+			return
+		}
+
+		query := "INSERT INTO (username, password) VALUES (?, ?)"
+		_, err = database.DB.Exec(query, username, hashedPassword)
+		if err != nil {
+			http.Error(w, "Ошибка регистрации")
 			return
 		}
 	}
