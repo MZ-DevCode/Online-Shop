@@ -24,6 +24,7 @@ func main() {
 	fileServer := http.FileServer(http.Dir("static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("/register", handlers.RegisterHandler)
+	mux.HandleFunc("/login", handlers.LoginHandler)
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	log.Println("Сервер запущен на http://localhost:8080")
