@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог товаров | Онлайн-магазин</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">🛍️ StoreGo</div>
+        <nav class="nav-links">
+            <a href="/catalog" class="active">Каталог</a>
+            <a href="/cart">Корзина</a>
+            <a href="/login" class="logout-btn">Выйти</a>
+        </nav>
+    </header>
+    <main class="container-catalog">
+        <h1>Каталог товаров</h1>
+
+        <div class="products-grid">
+            {{range .}}
+            <div class="product-card">
+                <div class="product-info">
+                    <h3>{{.Name}}</h3>
+                    <p class="price">{{.Price}} ₽</p>
+                    <p class="stock">В наличии: {{.Stock}} шт.</p>
+                </div>
+                <form action="/cart/add" method="POST">
+                    <input type="hidden" name="product_id" value="{{.ID}}">
+                    <button type="submit" class="buy-btn">В корзину</button>
+                </form>
+            </div>
+            {{else}}
+            <p class="empty-catalog">Товары пока не завезены на склад.</p>
+            {{end}}
+        </div>
+    </main>
+
+</body>
+</html>
