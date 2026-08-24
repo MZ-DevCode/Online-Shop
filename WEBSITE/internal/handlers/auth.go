@@ -6,6 +6,7 @@ import (
 	"WEBSITE/internal/utils"
 	"database/sql"
 	"errors"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -25,6 +26,22 @@ import (
 // @Failure 500 {string} string "Внутренняя ошибка сервера"
 // @Router /register [get]
 // @Router /register [post]
+
+func validatePassword(password string) (bool, string) {
+	length := len(password)
+	const minLength = 8
+	const maxLength = 64
+
+	if length < minLength {
+		return false, fmt.Sprintf("Пароль слишком короткий. Минимум %d символов.", minLength)
+	}
+
+	if length > maxLength {
+		return false, fmt.Sprintf("Пароль слишком длинный. Максимум %d символов.", maxLength)
+	}
+	return true, "Пароль подходит по длине!"
+}
+
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/register.html")
@@ -46,6 +63,11 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		repeatPassword := r.FormValue("repeatPassword")
 		if u.Password != repeatPassword {
 			http.Error(w, "Пароли не совпадают", http.StatusBadRequest)
+			return
+		}
+
+		if value, ok := validatePassword(u.Password); !ok {
+			http.Error(w, value, http.StatusBadRequest)
 			return
 		}
 
