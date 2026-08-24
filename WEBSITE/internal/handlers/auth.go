@@ -128,6 +128,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Write([]byte("Успешная авторизация!"))
-
+		http.Redirect(w, r, "/catalog", http.StatusSeeOther)
 	}
 }
