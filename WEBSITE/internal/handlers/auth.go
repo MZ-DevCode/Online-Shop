@@ -6,6 +6,7 @@ import (
 	"WEBSITE/internal/utils"
 	"database/sql"
 	"errors"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -25,6 +26,22 @@ import (
 // @Failure 500 {string} string "Внутренняя ошибка сервера"
 // @Router /register [get]
 // @Router /register [post]
+
+func validatePassword(password string) (bool, string) {
+	length := len(password)
+	const minLength = 8
+	const maxLength = 64
+
+	if length < minLength {
+		return false, fmt.Sprintf("Пароль слишком короткий. Минимум %d символов.", minLength)
+	}
+
+	if length > maxLength {
+		return false, fmt.Sprintf("Пароль слишком длинный. Максимум %d символов.", maxLength)
+	}
+	return true, "Пароль подходит по длине!"
+}
+
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/register.html")
@@ -46,6 +63,11 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		repeatPassword := r.FormValue("repeatPassword")
 		if u.Password != repeatPassword {
 			http.Error(w, "Пароли не совпадают", http.StatusBadRequest)
+			return
+		}
+
+		if value, ok := validatePassword(u.Password); !ok {
+			http.Error(w, value, http.StatusBadRequest)
 			return
 		}
 
@@ -106,48 +128,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Write([]byte("Успешная авторизация!"))
-
-	}
-}
-
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		tmpl, err := template.ParseFiles("templates/login.html")
-		if err != nil {
-			log.Println("Ошибка загрузки шаблона:", err)
-			http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
-			return
-		}
-
-		tmpl.Execute(w, nil)
-		return
-	}
-
-	if r.Method == "POST" {
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-
-		var hashedPassword string
-		query := "SELECT password FROM users WHERE username = $1"
-		err := database.DB.QueryRow(query, username).Scan(&hashedPassword)
-
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				log.Println("Ошибка поиска пользователя:", err)
-				http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
-				return
-			}
-
-			http.Error(w, "Ошибка поиска пользователя", http.StatusInternalServerError)
-			return
-		}
-
-		if !utils.CheckPasswordHash(password, hashedPassword) {
-			log.Println("Неверный пароль для пользователя:", username)
-			http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
-			return
-		}
-
 		http.Redirect(w, r, "/catalog", http.StatusSeeOther)
 	}
 }
