@@ -28,6 +28,7 @@ func InitDB() {
 	createTableQuery := `
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			uuid VARCHAR(11) TEXT NOT NULL,
 			username TEXT NOT NULL,
 			password TEXT NOT NULL
 		);`
