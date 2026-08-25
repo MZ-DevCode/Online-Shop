@@ -66,8 +66,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if value, ok := validatePassword(u.Password); !ok {
-			http.Error(w, value, http.StatusBadRequest)
+		if value, error := validatePassword(u.Password); !value {
+			http.Error(w, error, http.StatusBadRequest)
 			return
 		}
 
