@@ -2,11 +2,12 @@ package utils
 
 import (
 	"strings"
+
 	"github.com/google/uuid"
 )
 
-func GenerateUUID() string{
+func GenerateUUID() string {
 	fullUUID := uuid.New().String()
 	uuid := strings.ReplaceAll(fullUUID, "-", "")
-	return [:11]
+	return uuid[:11]
 }
