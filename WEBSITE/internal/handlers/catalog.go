@@ -11,6 +11,7 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 		rows, err := database.DB.Query("SELECT id, name, price, stock FROM products")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		defer rows.Close()
 
