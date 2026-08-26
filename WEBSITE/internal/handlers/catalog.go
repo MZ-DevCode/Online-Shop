@@ -3,6 +3,7 @@ package handlers
 import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
+	"html/template"
 	"net/http"
 )
 
@@ -25,6 +26,14 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			products = append(products, p)
+
+		tmpl, err := template.ParseFiles("templates/catalog.html")
+		if err != nil{
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		tmpl.Execute(w, products)
 		}
 
 	if r.Method == "POST" {
