@@ -38,4 +38,17 @@ func InitDB() {
 	if err != nil {
 		log.Printf("Ошибка создания таблицы users: %v", err)
 	}
+
+	createProductsTable := `
+    CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        price REAL NOT NULL,
+        stock INTEGER NOT NULL
+    );`
+
+	_, err = DB.Exec(createProductsTable)
+	if err != nil {
+		log.Printf("Ошибка создания таблицы products: %v", err)
+	}
 }
