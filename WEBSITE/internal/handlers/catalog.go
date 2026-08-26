@@ -8,7 +8,8 @@ import (
 )
 
 func CatalogHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
+	switch r.Method{
+		case "GET":
 		rows, err := database.DB.Query("SELECT id, name, price, stock FROM products")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -20,7 +21,7 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 
 		for rows.Next(){
 			var p models.Product
-		    err := rows.Scan(&p.id, &p.name, &p.price, &p.stock)
+		    err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
 			if err != nil{
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -35,8 +36,4 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 
 		tmpl.Execute(w, products)
 		}
-
-	if r.Method == "POST" {
-
-	}
 }
