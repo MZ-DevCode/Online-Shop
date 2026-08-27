@@ -37,3 +37,5 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 		tmpl.Execute(w, products)
 	}
 }
+
+func AddToCart(w http.ResponseWriter, r *http.Request)
