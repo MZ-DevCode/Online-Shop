@@ -39,19 +39,19 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddToCart(w http.ResponseWriter, r *http.Request) {
-	switch r.Method
+	switch r.Method {
 	case "POST":
-	id := r.FormValue("product_id")
+		id := r.FormValue("product_id")
 
-	query = "INSERT INTO cart VALUES (?)"
+		query = "INSERT INTO cart VALUES (?)"
 
-	_, err := database.DB.Exec(query, id)
-	if err != nil{
+		_, err := database.DB.Exec(query, id)
+		if err != nil {
 
-	}
+		}
 
-	tmpl, err := template.ParseFiles("templates/catalog.html")
-		if err != nil{
+		tmpl, err := template.ParseFiles("templates/catalog.html")
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
