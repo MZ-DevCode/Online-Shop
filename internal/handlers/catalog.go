@@ -52,12 +52,5 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.Redirect(w, r, "/catalog", http.StatusInternalServerError)
-
-		tmpl, err := template.ParseFiles("templates/catalog.html")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		tmpl.Execute()
 	}
 }
