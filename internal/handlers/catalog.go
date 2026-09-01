@@ -43,12 +43,15 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		id := r.FormValue("product_id")
 
-		query = "INSERT INTO cart VALUES (?)"
+		query := "INSERT INTO cart VALUES (?)"
 
 		_, err := database.DB.Exec(query, id)
 		if err != nil {
-
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+
+		http.Redirect(w, r, "/catalog", http.StatusInternalServerError)
 
 		tmpl, err := template.ParseFiles("templates/catalog.html")
 		if err != nil {
