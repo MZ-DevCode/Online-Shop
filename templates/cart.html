@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Корзина | Магазин</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Ваша корзина</h1>
+        <nav>
+            <a href="/catalog">Вернуться в каталог</a>
+        </nav>
+    </header>
+
+    <main>
+        {{if .}}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Название товара</th>
+                        <th>Цена</th>
+                        <th>В наличии</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .}}
+                    <tr>
+                        <td>{{.Name}}</td>
+                        <td>{{.Price}} ₽</td>
+                        <td>{{.Stock}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        {{else}}
+            <p>Ваша корзина пуста.</p>
+        {{end}}
+    </main>
+</body>
+</html>

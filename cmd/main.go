@@ -28,6 +28,7 @@ func main() {
 	mux.HandleFunc("GET /сatalog", handlers.CatalogHandler)
 	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
 	mux.HandleFunc("/cart/add", handlers.AddToCart())
+	mux.HandleFunc("/cart", handlers.ShowCart())
 
 	log.Println("Сервер запущен на http://localhost:8080")
 	http.ListenAndServe(":8080", mux)

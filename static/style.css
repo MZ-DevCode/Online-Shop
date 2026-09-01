@@ -160,11 +160,6 @@ button:active {
     color: #fca5a5 !important;
 }
 
-body {
-    display: block;
-    min-height: 100vh;
-}
-
 .container-catalog {
     max-width: 1100px;
     margin: 40px auto;
