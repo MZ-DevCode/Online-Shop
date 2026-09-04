@@ -25,9 +25,10 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("POST /register", handlers.RegisterHandler)
 	mux.HandleFunc("POST /login", handlers.LoginHandler)
-	mux.HandleFunc("GET /сatalog", handlers.CatalogHandler)
+	mux.HandleFunc("GET /catalog", handlers.CatalogHandler)
 	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
-	mux.HandleFunc("/cart/add", handlers.AddToCart())
+	mux.HandleFunc("POST /cart/add", handlers.AddToCart)
+	mux.HandleFunc("GET /cart", handlers.ShowCart)
 
 	log.Println("Сервер запущен на http://localhost:8080")
 	http.ListenAndServe(":8080", mux)
