@@ -5,6 +5,8 @@ import (
 	"WEBSITE/internal/models"
 	"html/template"
 	"net/http"
+
+	"github.com/go-openapi/swag/jsonutils/adapters/ifaces"
 )
 
 func CatalogHandler(w http.ResponseWriter, r *http.Request) {
@@ -53,4 +55,15 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 
 		http.Redirect(w, r, "/catalog", http.StatusInternalServerError)
 	}
+}
+
+func ShowCart(w http.ResponseWriter, r *http.Request){
+	rows, err := database.DB.Query(`
+		SELECT p.id, p.name, p.price, p.stock FROM cart;
+		`)
+	if err != nil {
+		http,Error(w, http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 }
