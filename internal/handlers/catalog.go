@@ -59,6 +59,10 @@ func ShowCart(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query(`
 		SELECT p.id, p.name, p.price, p.stock FROM cart;
 		`)
+
+	for rows.Next() {
+
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
