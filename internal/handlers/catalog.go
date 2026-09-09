@@ -66,7 +66,7 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 		}
 		query := "INSERT INTO cart(user_id, product_id) VALUES (?, ?)"
 
-		_, err := database.DB.Exec(query, userID, productID)
+		_, err = database.DB.Exec(query, userID, productID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
