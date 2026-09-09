@@ -56,6 +56,8 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowCart(w http.ResponseWriter, r *http.Request) {
+	id := 1
+
 	rows, err := database.DB.Query(`
 		SELECT p.id, p.name, p.price, p.stock
 		FROM cart c

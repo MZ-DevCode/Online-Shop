@@ -52,13 +52,13 @@ func InitDB() {
 		log.Printf("Ошибка создания таблицы products: %v", err)
 	}
 
-	createCart := `
-		CREATE TABLE IF NOT EXISTS cart(
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER NOT NULL,
-		product_id INTEGER NOT NULL,
-		);`
-
+	/*  	createCart := `
+	CREATE TABLE IF NOT EXISTS cart(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER NOT NULL,
+	product_id INTEGER NOT NULL,
+	);`
+	*/
 	_, err = DB.Exec(createProductsTable)
 	if err != nil {
 		log.Printf("Ошибка создания таблицы products: %v", err)
