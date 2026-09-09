@@ -25,6 +25,7 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("/register", handlers.RegisterHandler)
 	mux.HandleFunc("/login", handlers.LoginHandler)
+	mux.HandleFunc("/", handlers.CatalogHandler)
 	mux.HandleFunc("GET /catalog", handlers.CatalogHandler)
 	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
 	mux.HandleFunc("POST /cart/add", handlers.AddToCart)
