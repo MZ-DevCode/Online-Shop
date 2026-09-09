@@ -28,9 +28,9 @@ func InitDB() {
 	createTableQuery := `
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			uuid VARCHAR(11)UNIQUE NOT NULL,
-			username TEXT UNIQUE NOT NULL,
+			uuid VARCHAR(11) UNIQUE NOT NULL,
 			name TEXT NOT NULL,
+			username TEXT UNIQUE NOT NULL,
 			password TEXT NOT NULL
 		);`
 
@@ -50,5 +50,19 @@ func InitDB() {
 	_, err = DB.Exec(createProductsTable)
 	if err != nil {
 		log.Printf("Ошибка создания таблицы products: %v", err)
+	}
+
+	createCartTable := `
+	CREATE TABLE IF NOT EXISTS cart(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		product_id INTEGER NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id),
+		FOREIGN KEY (product_id) REFERENCES products(id)
+	);`
+
+	_, err = DB.Exec(createCartTable)
+	if err != nil {
+		log.Printf("Ошибка создания таблицы cart: %v", err)
 	}
 }
