@@ -80,7 +80,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		u.Password = hashedPassword
 
-		query := "INSERT INTO users (uuid, name, username, password) VALUES (?, ?, ?)"
+		query := "INSERT INTO users (uuid, name, username, password) VALUES (?, ?, ?, ?)"
 		_, err = database.DB.Exec(query, u.UUID, u.Name, u.Username, u.Password)
 		if err != nil {
 			log.Println("Ошибка записи в БД:", err)

@@ -41,11 +41,11 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 func AddToCart(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		id := r.FormValue("product_id")
+		productID := r.FormValue("product_id")
+		userID := 1
+		query := "INSERT INTO cart(user_id, product_id) VALUES (?, ?)"
 
-		query := "INSERT INTO cart VALUES (?)"
-
-		_, err := database.DB.Exec(query, id)
+		_, err := database.DB.Exec(query, userID, productID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

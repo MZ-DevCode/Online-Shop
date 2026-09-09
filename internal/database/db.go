@@ -58,11 +58,11 @@ func InitDB() {
 		user_id INTEGER NOT NULL,
 		product_id INTEGER NOT NULL,
 		FOREIGN KEY (user_id) REFERENCES users(id),
-		FOREIGN KEY (product_id) REFERENCES product(id)
+		FOREIGN KEY (product_id) REFERENCES products(id)
 	);`
 
 	_, err = DB.Exec(createCartTable)
 	if err != nil {
-		log.Printf("Ошибка создания таблицы products: %v", err)
+		log.Printf("Ошибка создания таблицы cart: %v", err)
 	}
 }
