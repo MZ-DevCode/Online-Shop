@@ -109,10 +109,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		var hashedPassword string
-		var userID int
+		var userUUID string
 
-		query := "SELECT id, password FROM users WHERE username = ?"
-		err := database.DB.QueryRow(query, username).Scan(&userID, &hashedPassword)
+		query := "SELECT uuid, password FROM users WHERE username = ?"
+		err := database.DB.QueryRow(query, username).Scan(&userUUID, &hashedPassword)
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -134,7 +134,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		sessionToken := utils.GenerateUUID()
 
-		_, err = database.DB.Exec("INSERT INTO sessions (token, user_id) VALUES (?, ?)", sessionToken, userID)
+		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, userUUID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				log.Println("Ошибка поиска пользователя:", err)
