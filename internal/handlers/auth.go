@@ -131,6 +131,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		sessionToken := utils.GenerateUUID()
+
+		cookie := http.Cookie{
+			Name:     "session_id",
+			Value:    sessionToken,
+			Parh:     "/",
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &cookie)
+
 		http.Redirect(w, r, "/catalog", http.StatusSeeOther)
 	}
 }
