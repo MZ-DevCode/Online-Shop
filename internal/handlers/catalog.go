@@ -65,6 +65,12 @@ func ShowCart(w http.ResponseWriter, r *http.Request) {
 		WHERE c.user_id = ?
 		`, id)
 
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
 	var products []models.Product
 	for rows.Next() {
 		var p models.Product
@@ -87,5 +93,5 @@ func ShowCart(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+
 }
