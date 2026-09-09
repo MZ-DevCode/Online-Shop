@@ -56,7 +56,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 		u := models.User{
-			Name:     r.FormValue("username"),
+			Username: r.FormValue("username"),
+			Name:     r.FormValue("name"),
 			Password: r.FormValue("password"),
 			UUID:     utils.GenerateUUID(),
 		}
@@ -79,8 +80,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		u.Password = hashedPassword
 
-		query := "INSERT INTO users (uuid, username, password) VALUES (?, ?, ?)"
-		_, err = database.DB.Exec(query, u.UUID, u.Name, u.Password)
+		query := "INSERT INTO users (uuid, name, username, password) VALUES (?, ?, ?)"
+		_, err = database.DB.Exec(query, u.UUID, u.Name, u.Username, u.Password)
 		if err != nil {
 			log.Println("Ошибка записи в БД:", err)
 			http.Error(w, "Ошибка регистрации", http.StatusBadRequest)

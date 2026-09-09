@@ -29,6 +29,7 @@ func InitDB() {
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			uuid VARCHAR(11) UNIQUE NOT NULL,
+			name TEXT NOT NULL,
 			username TEXT UNIQUE NOT NULL,
 			password TEXT NOT NULL
 		);`
