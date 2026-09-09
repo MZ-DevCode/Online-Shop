@@ -136,11 +136,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, userUUID)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				log.Println("Ошибка поиска пользователя:", err)
-				http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
-				return
-			}
+			log.Println("Ошибка сохранения сессии в БД:", err)
+			http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+			return
 		}
 
 		cookie := http.Cookie{
