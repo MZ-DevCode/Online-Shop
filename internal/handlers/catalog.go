@@ -11,7 +11,7 @@ import (
 func getUserIDFromSession(r *http.Request) (int, error) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		log.Printf("Error: ", err)
+		log.Printf("Error: %v", err)
 		return 0, err
 	}
 

@@ -78,4 +78,3 @@ func InitDB() {
 		log.Printf("Ошибка создания таблицы sessions: %v", err)
 	}
 }
-}

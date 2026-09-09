@@ -111,7 +111,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		var hashedPassword string
 		var userID int
 
-		query := "SELECT password FROM users WHERE username = ?"
+		query := "SELECT id, password FROM users WHERE username = ?"
 		err := database.DB.QueryRow(query, username).Scan(&userID, &hashedPassword)
 
 		if err != nil {
