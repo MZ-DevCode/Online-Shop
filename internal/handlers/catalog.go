@@ -89,9 +89,4 @@ func ShowCart(w http.ResponseWriter, r *http.Request) {
 
 	tmpl.Execute(w, products)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 }
