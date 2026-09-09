@@ -109,9 +109,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		var hashedPassword string
+		var userID int
 
 		query := "SELECT password FROM users WHERE username = ?"
-		err := database.DB.QueryRow(query, username).Scan(&hashedPassword)
+		err := database.DB.QueryRow(query, username).Scan(&userID, &hashedPassword)
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -133,10 +134,19 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		sessionToken := utils.GenerateUUID()
 
+		_, err = database.DB.Exec("INSERT INTO sessions (token, user_id) VALUES (?, ?)", sessionToken, userID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				log.Println("Ошибка поиска пользователя:", err)
+				http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
+				return
+			}
+		}
+
 		cookie := http.Cookie{
 			Name:     "session_id",
 			Value:    sessionToken,
-			Parh:     "/",
+			Path:     "/",
 			HttpOnly: true,
 		}
 		http.SetCookie(w, &cookie)
