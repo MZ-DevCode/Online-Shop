@@ -6,6 +6,7 @@ import (
 	"WEBSITE/internal/handlers"
 	"log"
 	"net/http"
+	"time"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
@@ -31,6 +32,16 @@ func main() {
 	mux.HandleFunc("POST /cart/add", handlers.AddToCart)
 	mux.HandleFunc("GET /cart", handlers.ShowCart)
 
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      mux,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
 	log.Println("Сервер запущен на http://localhost:8080")
-	http.ListenAndServe(":8080", mux)
+	if err := server.ListenAndServe(); err != nil {
+		log.Println("Error to started server:", err)
+	}
 }

@@ -65,4 +65,17 @@ func InitDB() {
 	if err != nil {
 		log.Printf("Ошибка создания таблицы cart: %v", err)
 	}
+
+	createSessionsTable := `
+	CREATE TABLE IF NOT EXISTS sessions(
+		token TEXT PRIMARY KEY,
+		user_id INTEGER NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id)
+	);`
+
+	_, err = DB.Exec(createSessionsTable)
+	if err != nil {
+		log.Printf("Ошибка создания таблицы sessions: %v", err)
+	}
+}
 }

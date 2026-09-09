@@ -4,8 +4,25 @@ import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
 	"html/template"
+	"log"
 	"net/http"
 )
+
+func getUserIDFromSession(r *http.Request) (int, error) {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		log.Printf("Error: ", err)
+		return 0, err
+	}
+
+	var userID int
+	err = database.DB.QueryRow("SELECT user_id FROM sessions WHERE token = ?", cookie.Value).Scan(&userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return userID, nil
+}
 
 func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -42,10 +59,14 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		productID := r.FormValue("product_id")
-		userID := 1
+		userID, err := getUserIDFromSession(r)
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
 		query := "INSERT INTO cart(user_id, product_id) VALUES (?, ?)"
 
-		_, err := database.DB.Exec(query, userID, productID)
+		_, err = database.DB.Exec(query, userID, productID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -56,14 +77,18 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowCart(w http.ResponseWriter, r *http.Request) {
-	id := 1
+	userID, err := getUserIDFromSession(r)
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
 
 	rows, err := database.DB.Query(`
 		SELECT p.id, p.name, p.price, p.stock
 		FROM cart c
 		JOIN products p ON c.product_id = p.id
 		WHERE c.user_id = ?
-		`, id)
+		`, userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
