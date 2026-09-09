@@ -28,7 +28,7 @@ func InitDB() {
 	createTableQuery := `
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			uuid VARCHAR(11) UNIQUE NOT NULL,
+			uuid TEXT UNIQUE NOT NULL,
 			name TEXT NOT NULL,
 			username TEXT UNIQUE NOT NULL,
 			password TEXT NOT NULL
@@ -40,12 +40,12 @@ func InitDB() {
 	}
 
 	createProductsTable := `
-    CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        price REAL NOT NULL,
-        stock INTEGER NOT NULL
-    );`
+	CREATE TABLE IF NOT EXISTS products (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		price REAL NOT NULL,
+		stock INTEGER NOT NULL
+	);`
 
 	_, err = DB.Exec(createProductsTable)
 	if err != nil {
@@ -55,7 +55,7 @@ func InitDB() {
 	createCartTable := `
 	CREATE TABLE IF NOT EXISTS cart(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_uuid INTEGER NOT NULL,
+		user_uuid TEXT NOT NULL,
 		product_id INTEGER NOT NULL,
 		FOREIGN KEY (user_uuid) REFERENCES users(uuid),
 		FOREIGN KEY (product_id) REFERENCES products(id)
@@ -69,8 +69,8 @@ func InitDB() {
 	createSessionsTable := `
 	CREATE TABLE IF NOT EXISTS sessions(
 		token TEXT PRIMARY KEY,
-		user_uuid INTEGER NOT NULL,
-		FOREIGN KEY (user_uuid) REFERENCES users(id)
+		user_uuid TEXT NOT NULL,
+		FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 	);`
 
 	_, err = DB.Exec(createSessionsTable)
