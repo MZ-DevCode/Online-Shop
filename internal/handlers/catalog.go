@@ -8,20 +8,20 @@ import (
 	"net/http"
 )
 
-func getUserIDFromSession(r *http.Request) (int, error) {
+func getUserUUIDFromSession(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		log.Printf("Error: ", err)
-		return 0, err
+		log.Printf("Error: %v", err)
+		return "", err
 	}
 
-	var userID int
-	err = database.DB.QueryRow("SELECT user_id FROM sessions WHERE token = ?", cookie.Value).Scan(&userID)
+	var userUUID string
+	err = database.DB.QueryRow("SELECT user_uuid FROM sessions WHERE token = ?", cookie.Value).Scan(&userUUID)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
-	return userID, nil
+	return userUUID, nil
 }
 
 func CatalogHandler(w http.ResponseWriter, r *http.Request) {
@@ -59,14 +59,14 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		productID := r.FormValue("product_id")
-		userID, err := getUserIDFromSession(r)
+		userUUID, err := getUserUUIDFromSession(r)
 		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-		query := "INSERT INTO cart(user_id, product_id) VALUES (?, ?)"
+		query := "INSERT INTO cart(user_uuid, product_id) VALUES (?, ?)"
 
-		_, err = database.DB.Exec(query, userID, productID)
+		_, err = database.DB.Exec(query, userUUID, productID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -77,7 +77,7 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowCart(w http.ResponseWriter, r *http.Request) {
-	userID, err := getUserIDFromSession(r)
+	userUUID, err := getUserUUIDFromSession(r)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
@@ -87,8 +87,8 @@ func ShowCart(w http.ResponseWriter, r *http.Request) {
 		SELECT p.id, p.name, p.price, p.stock
 		FROM cart c
 		JOIN products p ON c.product_id = p.id
-		WHERE c.user_id = ?
-		`, userID)
+		WHERE c.user_uuid = ?
+		`, userUUID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -8,24 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 )
-
-// RegisterHandler обрабатывает регистрацию нового пользователя
-// @Summary Регистрация пользователя
-// @Description Отображает форму регистрации (GET) или создает нового пользователя (POST)
-// @Tags auth
-// @Accept application/x-www-form-urlencoded
-// @Produce text/html
-// @Param username formData string true "Имя пользователя"
-// @Param password formData string true "Пароль"
-// @Param repeatPassword formData string true "Повтор пароля"
-// @Success 200 {string} string "HTML страница или успешная регистрация"
-// @Failure 400 {string} string "Ошибка валидации или несовпадение паролей"
-// @Failure 500 {string} string "Внутренняя ошибка сервера"
-// @Router /register [get]
-// @Router /register [post]
 
 func validatePassword(password string) (bool, string) {
 	length := len(password)
@@ -46,7 +30,6 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/register.html")
 		if err != nil {
-			log.Println("Ошибка загрузки шаблона:", err)
 			http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
@@ -83,10 +66,24 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		query := "INSERT INTO users (uuid, name, username, password) VALUES (?, ?, ?, ?)"
 		_, err = database.DB.Exec(query, u.UUID, u.Name, u.Username, u.Password)
 		if err != nil {
-			log.Println("Ошибка записи в БД:", err)
 			http.Error(w, "Ошибка регистрации", http.StatusBadRequest)
 			return
 		}
+
+		sessionToken := utils.GenerateUUID()
+		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, u.UUID)
+		if err != nil {
+			http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+			return
+		}
+
+		cookie := http.Cookie{
+			Name:     "session_id",
+			Value:    sessionToken,
+			Path:     "/",
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &cookie)
 
 		http.Redirect(w, r, "/catalog", http.StatusSeeOther)
 	}
@@ -96,7 +93,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/login.html")
 		if err != nil {
-			log.Println("Ошибка загрузки шаблона:", err)
 			http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
@@ -109,38 +105,31 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		var hashedPassword string
-		var userID int
+		var userUUID string
 
-		query := "SELECT password FROM users WHERE username = ?"
-		err := database.DB.QueryRow(query, username).Scan(&userID, &hashedPassword)
+		query := "SELECT uuid, password FROM users WHERE username = ?"
+		err := database.DB.QueryRow(query, username).Scan(&userUUID, &hashedPassword)
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				log.Println("Ошибка поиска пользователя:", err)
 				http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
 				return
 			}
-
-			log.Println("Ошибка БД:", err)
 			http.Error(w, "Ошибка поиска пользователя", http.StatusInternalServerError)
 			return
 		}
 
 		if !utils.CheckPasswordHash(password, hashedPassword) {
-			log.Println("Неверный пароль для пользователя:", username)
 			http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
 			return
 		}
 
 		sessionToken := utils.GenerateUUID()
 
-		_, err = database.DB.Exec("INSERT INTO sessions (token, user_id) VALUES (?, ?)", sessionToken, userID)
+		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, userUUID)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				log.Println("Ошибка поиска пользователя:", err)
-				http.Error(w, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
-				return
-			}
+			http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+			return
 		}
 
 		cookie := http.Cookie{
