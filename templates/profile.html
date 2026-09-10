@@ -20,12 +20,46 @@
     <main class="container-catalog">
         <h1>Личный кабинет</h1>
 
-        <div class="product-card" style="max-width: 500px; margin-bottom: 24px;">
+        <div class="product-card" style="max-width: 100%; margin-bottom: 24px; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <div class="product-info">
-                <h3>Добро пожаловать, {{.Name}}!</h3>
-                <p class="stock" style="margin-bottom: 16px;">Никнейм: @{{.Username}}</p>
+                <h3 style="font-size: 20px; margin-bottom: 6px;">Привет, {{.Name}}!</h3>
+                <p class="stock" style="font-size: 14px; margin-bottom: 0;">Никнейм в системе: <strong>@{{.Username}}</strong></p>
             </div>
-            <a href="/profile/product/add" class="buy-btn" style="text-align: center; text-decoration: none; display: block;">Добавить новый товар</a>
+            <div>
+                <a href="/profile/product/add" class="buy-btn" style="text-align: center; text-decoration: none; display: inline-block; padding: 10px 20px; width: auto;">+ Добавить товар</a>
+            </div>
+        </div>
+
+        <div class="products-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 24px;">
+            <div class="product-card">
+                <div class="product-info">
+                    <h3>Ваши товары</h3>
+                    <p class="stock">Управляйте каталогом: изменяйте цены, остатки или удаляйте выставленные вами позиции.</p>
+                </div>
+                <div style="margin-top: 20px;">
+                    <a href="/catalog" class="buy-btn" style="text-align: center; text-decoration: none; display: block; background-color: transparent; border: 1px solid var(--border);">Смотреть каталог</a>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-info">
+                    <h3>Корзина</h3>
+                    <p class="stock">Проверяйте добавленные товары перед оформлением заказа или переходите к истории покупок.</p>
+                </div>
+                <div style="margin-top: 20px;">
+                    <a href="/cart" class="buy-btn" style="text-align: center; text-decoration: none; display: block; background-color: transparent; border: 1px solid var(--border);">Перейти в корзину</a>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-info">
+                    <h3>Безопасность</h3>
+                    <p class="stock">Ваша сессия защищена уникальным токеном. Вы можете завершить сеанс в любой момент.</p>
+                </div>
+                <div style="margin-top: 20px;">
+                    <a href="/logout" class="buy-btn remove-btn" style="text-align: center; text-decoration: none; display: block; width: 100%;">Выйти из аккаунта</a>
+                </div>
+            </div>
         </div>
     </main>
 </body>
