@@ -80,4 +80,8 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tmpl.Execute(w, u)
+
+	default:
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+	}
 }
