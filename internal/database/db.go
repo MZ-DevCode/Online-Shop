@@ -42,9 +42,11 @@ func InitDB() {
 	createProductsTable := `
 	CREATE TABLE IF NOT EXISTS products (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_uuid TEXT NOT NULL,
 		name TEXT NOT NULL,
 		price REAL NOT NULL,
-		stock INTEGER NOT NULL
+		stock INTEGER NOT NULL,
+		FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 	);`
 
 	_, err = DB.Exec(createProductsTable)
