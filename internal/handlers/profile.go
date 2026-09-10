@@ -3,7 +3,9 @@ package handlers
 import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
+	"WEBSITE/internal/utils"
 	"html/template"
+	"log"
 	"net/http"
 )
 
@@ -18,6 +20,34 @@ func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 		currentPassword := r.FormValue("current_password")
 		newPassword := r.FormValue("new_password")
+
+		var hash string
+		err = database.DB.QueryRow("SELECT password FROM users WHERE uuid = ?", userUUID).Scan(&hash)
+
+		if err != nil {
+			http.Error(w, "Ошибка пользователя", http.StatusInternalServerError)
+			log.Println("Error: %v", err)
+			return
+		}
+
+		if !utils.CheckPasswordHash(currentPassword, hash) {
+			http.Error(w, "Неверный текущий пароль", http.StatusUnauthorized)
+			return
+		}
+
+		newHash, err := utils.HashPassword(newPassword)
+		if err != nil {
+			http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = database.DB.Exec("UPDATE users SET password = ? WHERE uuid = ?", newHash, userUUID)
+		if err != nil {
+			http.Error(w, "Ошибка сохранения", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/profile", http.StatusSeeOther)
 
 	default:
 		http.Redirect(w, r, "/profile", http.StatusSeeOther)
