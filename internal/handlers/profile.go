@@ -7,6 +7,24 @@ import (
 	"net/http"
 )
 
+func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		userUUID, err := getUserUUIDFromSession(r)
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		currentPassword := r.FormValue("current_password")
+		newPassword := r.FormValue("new_password")
+
+	default:
+		http.Redirect(w, r, "/profile", http.StatusSeeOther)
+		return
+	}
+}
+
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":

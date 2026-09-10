@@ -22,8 +22,8 @@
 
         <div class="product-card" style="max-width: 100%; margin-bottom: 24px; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <div class="product-info">
-                <h3 style="font-size: 20px; margin-bottom: 6px;">Привет, {{.Name}}!</h3>
-                <p class="stock" style="font-size: 14px; margin-bottom: 0;">Никнейм в системе: <strong>@{{.Username}}</strong></p>
+                <p class="stock" style="font-size: 14px; margin-bottom: 0;">Имя: <strong>{{.Name}}!</strong></p>
+                <p class="stock" style="font-size: 14px; margin-bottom: 0;">Никнейм: <strong>@{{.Username}}</strong></p>
             </div>
             <div>
                 <a href="/profile/product/add" class="buy-btn" style="text-align: center; text-decoration: none; display: inline-block; padding: 10px 20px; width: auto;">+ Добавить товар</a>
@@ -60,6 +60,26 @@
                     <a href="/logout" class="buy-btn remove-btn" style="text-align: center; text-decoration: none; display: block; width: 100%;">Выйти из аккаунта</a>
                 </div>
             </div>
+
+            <div class="product-card">
+                <div class="product-info" style="margin-bottom: 16px;">
+                    <h3>🔒 Смена пароля</h3>
+                    <p class="stock">Обновите пароль для безопасности аккаунта.</p>
+                </div>
+                <form action="/profile/password" method="POST">
+                    <div class="form-group">
+                        <label>Текущий пароль</label>
+                        <input type="password" name="current_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Новый пароль</label>
+                        <input type="password" name="new_password" required>
+                    </div>
+                    <button type="submit">Изменить пароль</button>
+                </form>
+            </div>
+
+
         </div>
     </main>
 </body>
