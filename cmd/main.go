@@ -31,8 +31,8 @@ func main() {
 	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
 	mux.HandleFunc("POST /cart/add", handlers.AddToCart)
 	mux.HandleFunc("GET /cart", handlers.ShowCart)
-	mux.HandleFunc("GET /profile", handlers.ProfileHandler)
-	mux.HandleFunc("/profile/product/add", handlers.AddProduct)
+	mux.HandleFunc("/profile", handlers.ProfileHandler)
+	//mux.HandleFunc("/profile/product/add", handlers.AddProduct)
 
 	server := &http.Server{
 		Addr:         ":8080",
