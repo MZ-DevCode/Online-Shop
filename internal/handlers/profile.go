@@ -26,7 +26,7 @@ func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			http.Error(w, "Ошибка пользователя", http.StatusInternalServerError)
-			log.Println("Error: %v", err)
+			log.Printf("Error: %v", err)
 			return
 		}
 
@@ -38,12 +38,14 @@ func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 		newHash, err := utils.HashPassword(newPassword)
 		if err != nil {
 			http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
+			log.Printf("Error: %v", err)
 			return
 		}
 
 		_, err = database.DB.Exec("UPDATE users SET password = ? WHERE uuid = ?", newHash, userUUID)
 		if err != nil {
 			http.Error(w, "Ошибка сохранения", http.StatusInternalServerError)
+			log.Printf("Error: %v", err)
 			return
 		}
 
@@ -78,8 +80,4 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tmpl.Execute(w, u)
-
-	case "POST":
-
-	}
 }
