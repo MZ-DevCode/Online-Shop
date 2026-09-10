@@ -2,39 +2,66 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Корзина | Магазин</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина | StoreGo</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <header>
-        <h1>Ваша корзина</h1>
-        <nav>
-            <a href="/catalog">Вернуться в каталог</a>
+    <header class="navbar">
+        <div class="logo">🛍️ StoreGo</div>
+        <nav class="nav-links">
+            <a href="/profile">Профиль</a>
+            <a href="/catalog">Каталог</a>
+            <a href="/cart" class="active">Корзина</a>
+            <a href="/logout" class="logout-btn">Выйти</a>
         </nav>
     </header>
 
-    <main>
-        {{if .}}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Название товара</th>
-                        <th>Цена</th>
-                        <th>В наличии</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range .}}
-                    <tr>
-                        <td>{{.Name}}</td>
-                        <td>{{.Price}}</td>
-                        <td>{{.Stock}}</td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+    <main class="container-catalog">
+        <h1>Ваша корзина</h1>
+
+        {{if .Items}}
+            <div class="cart-container">
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Цена</th>
+                            <th>Количество</th>
+                            <th>Итого</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Items}}
+                        <tr>
+                            <td>{{.Name}}</td>
+                            <td>{{.Price}} ₽</td>
+                            <td>{{.Quantity}}</td>
+                            <td>{{.TotalItemPrice}} ₽</td>
+                            <td>
+                                <form action="/cart/remove" method="POST">
+                                    <input type="hidden" name="product_id" value="{{.ID}}">
+                                    <button type="submit" class="remove-btn">Удалить</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+
+                <div class="cart-summary">
+                    <h2>Итого к оплате: <span>{{.TotalPrice}} ₽</span></h2>
+                    <form action="/order/checkout" method="POST">
+                        <button type="submit" class="checkout-btn">Оформить заказ</button>
+                    </form>
+                </div>
+            </div>
         {{else}}
-            <p>Ваша корзина пуста.</p>
+            <div class="empty-cart">
+                <p>Ваша корзина пока пуста.</p>
+                <a href="/catalog" class="buy-btn" style="display: inline-block; width: auto; padding: 12px 24px; margin-top: 15px; text-decoration: none;">Перейти в каталог</a>
+            </div>
         {{end}}
     </main>
 </body>
