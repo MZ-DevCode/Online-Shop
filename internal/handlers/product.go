@@ -37,10 +37,13 @@ func CreateProductHandler(w http.ResponseWriter, r *http.Request) {
 			Stock:       stock,
 		}
 
-		_, err = database.DB.Exec("INSERT INTO products(user_uuid, name, price, description, stock) VALUES (?, ?, ?, ?, ?) WHERE id = ?", p.UserUUID, p.Name, p.Price, p.Stock, p.Description, userUUID)
+		_, err = database.DB.Exec("INSERT INTO products(user_uuid, name, price, description, stock) VALUES (?, ?, ?, ?, ?)", p.UserUUID, p.Name, p.Price, p.Description, p.Stock)
 		if err != nil {
 			http.Error(w, "Ошибка записи товара", http.StatusInternalServerError)
+			return
 		}
+
+		http.Redirect(w, r, "/catalog", http.StatusSeeOther)
 
 		tmpl, err := template.ParseFiles("/templates/add_product")
 		if err != nil {
