@@ -36,9 +36,9 @@
                         {{range .Items}}
                         <tr>
                             <td>{{.Name}}</td>
-                            <td>{{.Price}} ₽</td>
+                            <td>{{.Price}}</td>
                             <td>{{.Quantity}}</td>
-                            <td>{{.TotalItemPrice}} ₽</td>
+                            <td>{{.TotalItemPrice}}</td>
                             <td>
                                 <form action="/cart/remove" method="POST">
                                     <input type="hidden" name="product_id" value="{{.ID}}">
