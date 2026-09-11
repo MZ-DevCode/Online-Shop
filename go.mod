@@ -3,6 +3,7 @@ module WEBSITE
 go 1.26.5
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/swaggo/http-swagger/v2 v2.0.2
 	github.com/swaggo/swag v1.16.6
 	golang.org/x/crypto v0.55.0
@@ -22,7 +23,6 @@ require (
 	github.com/go-openapi/swag/stringutils v0.29.0 // indirect
 	github.com/go-openapi/swag/typeutils v0.29.0 // indirect
 	github.com/go-openapi/swag/yamlutils v0.29.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
