@@ -45,13 +45,12 @@ func CreateProductHandler(w http.ResponseWriter, r *http.Request) {
 
 		http.Redirect(w, r, "/catalog", http.StatusSeeOther)
 
-		tmpl, err := template.ParseFiles("/templates/add_product")
+	case "GET":
+		tmpl, err := template.ParseFiles("templates/add_product.html")
 		if err != nil {
 			http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
 		tmpl.Execute(w, nil)
-
-	case "GET":
 	}
 }
