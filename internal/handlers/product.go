@@ -30,19 +30,24 @@ func CreateProductHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		p := models.Product{
+			UserUUID:    userUUID,
 			Name:        r.FormValue("name"),
 			Price:       price,
 			Description: r.FormValue("description"),
 			Stock:       stock,
 		}
 
-		_, err = database.DB.Exec("INSERT INTO")
+		_, err = database.DB.Exec("INSERT INTO products(user_uuid, name, price, description, stock) VALUES (?, ?, ?, ?, ?) WHERE id = ?", p.UserUUID, p.Name, p.Price, p.Stock, p.Description, userUUID)
+		if err != nil {
+			http.Error(w, "Ошибка записи товара", http.StatusInternalServerError)
+		}
 
 		tmpl, err := template.ParseFiles("/templates/add_product")
 		if err != nil {
 			http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
+		tmpl.Execute(w, nil)
 
 	case "GET":
 	}
