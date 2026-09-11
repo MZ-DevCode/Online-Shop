@@ -46,6 +46,7 @@ func InitDB() {
 		name TEXT NOT NULL,
 		price REAL NOT NULL,
 		stock INTEGER NOT NULL,
+		description TEXT NOT NULL,
 		FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 	);`
 
