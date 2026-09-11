@@ -4,6 +4,7 @@ import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -39,6 +40,7 @@ func CreateProductHandler(w http.ResponseWriter, r *http.Request) {
 
 		_, err = database.DB.Exec("INSERT INTO products(user_uuid, name, price, description, stock) VALUES (?, ?, ?, ?, ?)", p.UserUUID, p.Name, p.Price, p.Description, p.Stock)
 		if err != nil {
+			log.Printf("Ошибка: %v", err)
 			http.Error(w, "Ошибка записи товара", http.StatusInternalServerError)
 			return
 		}
