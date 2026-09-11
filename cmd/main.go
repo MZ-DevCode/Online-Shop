@@ -33,6 +33,7 @@ func main() {
 	mux.HandleFunc("GET /cart", handlers.ShowCart)
 	mux.HandleFunc("/profile", handlers.ProfileHandler)
 	mux.HandleFunc("/profile/password", handlers.ChangePasswordHandler)
+	mux.HandleFunc("/prodile/product/add", handlers.CreateProductHandler)
 
 	server := &http.Server{
 		Addr:         ":8080",

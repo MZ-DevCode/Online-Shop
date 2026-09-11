@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"WEBSITE/internal/database"
+	"WEBSITE/internal/models"
 	"html/template"
 	"net/http"
 )
@@ -13,6 +15,17 @@ func CreateProductHandler(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+
+		var p models.Product
+
+		models.Product{
+			Name:        r.FormValue("name"),
+			Price:       r.FormValue("price"),
+			Description: r.FormValue("description"),
+			Stock:       r.FormValue("stock"),
+		}
+
+		_, err = database.DB.Exec("INSERT INTO")
 
 		tmpl, err := template.ParseFiles("/templates/add_product")
 		if err != nil {
