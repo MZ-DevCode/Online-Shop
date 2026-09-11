@@ -10,6 +10,7 @@
     <header class="navbar">
         <div class="logo">🛍️ StoreGo</div>
         <nav class="nav-links">
+            <a href="/profile">Профиль</a>
             <a href="/catalog">Каталог</a>
             <a href="/cart">Корзина</a>
             <a href="/logout" class="logout-btn">Выйти</a>
@@ -20,7 +21,7 @@
         <div class="container" style="max-width: 480px;">
             <h2>Добавление товара</h2>
 
-            <form action="/products/add" method="POST">
+            <form action="profile/product/add" method="POST">
                 <div class="form-group">
                     <label>Название товара</label>
                     <input type="text" name="name" placeholder="Введите название" required>
