@@ -5,6 +5,7 @@ import (
 	"WEBSITE/internal/models"
 	"html/template"
 	"net/http"
+	"strconv"
 )
 
 func CreateProductHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,13 +17,23 @@ func CreateProductHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var p models.Product
+		price, err := strconv.ParseFloat(r.FormValue("price"), 64)
+		if err != nil {
+			http.Error(w, "Неверный формат цены", http.StatusBadRequest)
+			return
+		}
 
-		models.Product{
+		stock, err := strconv.Atoi(r.FormValue("stock"))
+		if err != nil {
+			http.Error(w, "Неверный формат количества", http.StatusBadRequest)
+			return
+		}
+
+		p := models.Product{
 			Name:        r.FormValue("name"),
-			Price:       r.FormValue("price"),
+			Price:       price,
 			Description: r.FormValue("description"),
-			Stock:       r.FormValue("stock"),
+			Stock:       stock,
 		}
 
 		_, err = database.DB.Exec("INSERT INTO")
