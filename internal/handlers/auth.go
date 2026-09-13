@@ -143,3 +143,22 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/catalog", http.StatusSeeOther)
 	}
 }
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	sessionToken, err := r.Cookie("session_id")
+	if err != nil {
+		http.Error(w, "Error: ", err.Error())
+		return
+	}
+	_, _ := database.DB.Exec("DELETE FROM sessions WHERE token = ?", cookie.Value)
+
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionToken,
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, cookie)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}

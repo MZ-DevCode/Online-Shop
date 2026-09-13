@@ -34,6 +34,7 @@ func main() {
 	mux.HandleFunc("/profile", handlers.ProfileHandler)
 	mux.HandleFunc("/profile/password", handlers.ChangePasswordHandler)
 	mux.HandleFunc("/profile/product/add", handlers.CreateProductHandler)
+	mux.HandleFunc("/logout", handlers.LogoutHandler)
 
 	server := &http.Server{
 		Addr:         ":8080",
