@@ -18,23 +18,23 @@ import (
 // @BasePath /
 
 func main() {
-
 	database.InitDB()
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
-	mux.HandleFunc("/register", handlers.RegisterHandler)
-	mux.HandleFunc("/login", handlers.LoginHandler)
-	mux.HandleFunc("/", handlers.CatalogHandler)
-	mux.HandleFunc("GET /catalog", handlers.CatalogHandler)
+
+	mux.HandleFunc("/register", handlers.MakeHandler((*handlers.Context).RegisterHandler))
+	mux.HandleFunc("/login", handlers.MakeHandler((*handlers.Context).LoginHandler))
+	mux.HandleFunc("/", handlers.MakeHandler((*handlers.Context).CatalogHandler))
+	mux.HandleFunc("GET /catalog", handlers.MakeHandler((*handlers.Context).CatalogHandler))
 	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
-	mux.HandleFunc("POST /cart/add", handlers.AddToCart)
-	mux.HandleFunc("GET /cart", handlers.ShowCart)
-	mux.HandleFunc("/profile", handlers.ProfileHandler)
-	mux.HandleFunc("/profile/password", handlers.ChangePasswordHandler)
-	mux.HandleFunc("/profile/product/add", handlers.CreateProductHandler)
-	mux.HandleFunc("/logout", handlers.LogoutHandler)
+	mux.HandleFunc("POST /cart/add", handlers.MakeHandler((*handlers.Context).AddToCart))
+	mux.HandleFunc("GET /cart", handlers.MakeHandler((*handlers.Context).ShowCart))
+	mux.HandleFunc("/profile", handlers.MakeHandler((*handlers.Context).ProfileHandler))
+	mux.HandleFunc("/profile/password", handlers.MakeHandler((*handlers.Context).ChangePasswordHandler))
+	mux.HandleFunc("/profile/product/add", handlers.MakeHandler((*handlers.Context).CreateProductHandler))
+	mux.HandleFunc("/logout", handlers.MakeHandler((*handlers.Context).LogoutHandler))
 
 	server := &http.Server{
 		Addr:         ":8080",

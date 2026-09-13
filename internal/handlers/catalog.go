@@ -9,11 +9,6 @@ import (
 	"net/http"
 )
 
-type Context struct {
-	W http.ResponseWriter
-	R *http.Request
-}
-
 func (c *Context) getUserUUIDFromSession() (string, error) {
 	cookie, err := c.R.Cookie("session_id")
 	if err != nil {
