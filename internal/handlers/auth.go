@@ -145,20 +145,25 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	sessionToken, err := r.Cookie("session_id")
+	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		http.Error(w, "Error: ", err.Error())
+		http.Error(w, "Unauthorized: ", http.StatusUnauthorized)
 		return
 	}
-	_, _ := database.DB.Exec("DELETE FROM sessions WHERE token = ?", cookie.Value)
+	_, err = database.DB.Exec("DELETE FROM sessions WHERE token = ?", cookie.Value)
+	if err != nil {
+		http.Error("")
+		return
+	}
 
-	cookie := &http.Cookie{
+	cookie = &http.Cookie{
 		Name:     "session_id",
-		Value:    sessionToken,
+		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
 	}
+
 	http.SetCookie(w, cookie)
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
