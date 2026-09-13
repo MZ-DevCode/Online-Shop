@@ -18,6 +18,9 @@ func InitDB() {
 		return
 	}
 
+	DB.SetMaxOpenConns(1)
+	DB.SetMaxIdleConns(1)
+
 	err = DB.Ping()
 	if err != nil {
 		log.Println("База данных не отвечает: ", err)
