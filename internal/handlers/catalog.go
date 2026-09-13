@@ -145,5 +145,26 @@ func (c *Context) ShowCart() {
 }
 
 func (c *Context) RemoveFromCart() {
+	switch c.R.Method {
+	case "POST":
+		userUUID, err := c.getUserUUIDFromSession()
+		if err != nil {
+			c.Redirect("/login")
+			return
+		}
 
+		productID := c.R.FormValue("product_id")
+
+		_, err = database.DB.Exec("DELETE FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID)
+		if err != nil {
+			c.Error("Error", http.StatusInternalServerError)
+			return
+		}
+
+		c.Redirect("/cart")
+
+	default:
+
+		c.Redirect("/cart")
+	}
 }
