@@ -38,7 +38,7 @@ func (c *Context) CreateProductHandler() {
 			Stock:       stock,
 		}
 
-		_, err = database.DB.Exec("INSERT INTO products(user_uuid, name, price, description, stock) VALUES (?, ?, ?, ?, ?)", p.UserUUID, p.Name, p.Price, p.Description, p.Stock)
+		_, err = database.DB.ExecContext(c.Ctx, "INSERT INTO products(user_uuid, name, price, description, stock) VALUES (?, ?, ?, ?, ?)", p.UserUUID, p.Name, p.Price, p.Description, p.Stock)
 		if err != nil {
 			log.Printf("Ошибка: %v", err)
 			c.Error("Ошибка записи товара", http.StatusInternalServerError)

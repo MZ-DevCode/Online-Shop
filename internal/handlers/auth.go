@@ -64,14 +64,14 @@ func (c *Context) RegisterHandler() {
 		u.Password = hashedPassword
 
 		query := "INSERT INTO users (uuid, name, username, password) VALUES (?, ?, ?, ?)"
-		_, err = database.DB.Exec(query, u.UUID, u.Name, u.Username, u.Password)
+		_, err = database.DB.ExecContext(c.Ctx, query, u.UUID, u.Name, u.Username, u.Password)
 		if err != nil {
 			c.Error("Ошибка регистрации", http.StatusBadRequest)
 			return
 		}
 
 		sessionToken := utils.GenerateUUID()
-		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, u.UUID)
+		_, err = database.DB.ExecContext(c.Ctx, "INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, u.UUID)
 		if err != nil {
 			c.Error("Внутренняя ошибка сервера", http.StatusInternalServerError)
 			return
@@ -108,7 +108,7 @@ func (c *Context) LoginHandler() {
 		var userUUID string
 
 		query := "SELECT uuid, password FROM users WHERE username = ?"
-		err := database.DB.QueryRow(query, username).Scan(&userUUID, &hashedPassword)
+		err := database.DB.QueryRowContext(c.Ctx, query, username).Scan(&userUUID, &hashedPassword)
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -126,7 +126,7 @@ func (c *Context) LoginHandler() {
 
 		sessionToken := utils.GenerateUUID()
 
-		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, userUUID)
+		_, err = database.DB.ExecContext(c.Ctx, "INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, userUUID)
 		if err != nil {
 			c.Error("Внутренняя ошибка сервера", http.StatusInternalServerError)
 			return
@@ -150,7 +150,7 @@ func (c *Context) LogoutHandler() {
 		c.Error("Unauthorized: ", http.StatusUnauthorized)
 		return
 	}
-	_, err = database.DB.Exec("DELETE FROM sessions WHERE token = ?", cookie.Value)
+	_, err = database.DB.ExecContext(c.Ctx, "DELETE FROM sessions WHERE token = ?", cookie.Value)
 	if err != nil {
 		c.Error("Ошибка сервера при выходе", http.StatusInternalServerError)
 		return

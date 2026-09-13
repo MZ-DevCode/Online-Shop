@@ -17,7 +17,7 @@ func (c *Context) getUserUUIDFromSession() (string, error) {
 	}
 
 	var userUUID string
-	err = database.DB.QueryRow("SELECT user_uuid FROM sessions WHERE token = ?", cookie.Value).Scan(&userUUID)
+	err = database.DB.QueryRowContext(c.Ctx, "SELECT user_uuid FROM sessions WHERE token = ?", cookie.Value).Scan(&userUUID)
 	if err != nil {
 		return "", err
 	}
@@ -28,7 +28,7 @@ func (c *Context) getUserUUIDFromSession() (string, error) {
 func (c *Context) CatalogHandler() {
 	switch c.R.Method {
 	case "GET":
-		rows, err := database.DB.Query("SELECT id, name, price, stock FROM products")
+		rows, err := database.DB.QueryContext(c.Ctx, "SELECT id, name, price, stock FROM products")
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
@@ -68,7 +68,7 @@ func (c *Context) AddToCart() {
 		}
 
 		var check int
-		err = database.DB.QueryRow("SELECT id FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID).Scan(&check)
+		err = database.DB.QueryRowContext(c.Ctx, "SELECT id FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID).Scan(&check)
 		if err == nil {
 			c.Redirect("/catalog")
 			return
@@ -76,7 +76,7 @@ func (c *Context) AddToCart() {
 
 		query := "INSERT INTO cart(user_uuid, product_id) VALUES (?, ?)"
 
-		_, err = database.DB.Exec(query, userUUID, productID)
+		_, err = database.DB.ExecContext(c.Ctx, query, userUUID, productID)
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
@@ -94,7 +94,7 @@ func (c *Context) ShowCart() {
 	}
 
 	var rows *sql.Rows
-	rows, err = database.DB.Query(`
+	rows, err = database.DB.QueryContext(c.Ctx, `
 		SELECT p.id, p.name, p.price, p.stock
 		FROM cart cart_alias
 		JOIN products p ON cart_alias.product_id = p.id
@@ -155,7 +155,7 @@ func (c *Context) RemoveFromCart() {
 
 		productID := c.R.FormValue("product_id")
 
-		_, err = database.DB.Exec("DELETE FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID)
+		_, err = database.DB.ExecContext(c.Ctx, "DELETE FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID)
 		if err != nil {
 			c.Error("Error", http.StatusInternalServerError)
 			return
@@ -164,7 +164,6 @@ func (c *Context) RemoveFromCart() {
 		c.Redirect("/cart")
 
 	default:
-
 		c.Redirect("/cart")
 	}
 }

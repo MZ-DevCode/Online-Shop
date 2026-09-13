@@ -22,7 +22,7 @@ func (c *Context) ChangePasswordHandler() {
 		newPassword := c.R.FormValue("new_password")
 
 		var hash string
-		err = database.DB.QueryRow("SELECT password FROM users WHERE uuid = ?", userUUID).Scan(&hash)
+		err = database.DB.QueryRowContext(c.Ctx, "SELECT password FROM users WHERE uuid = ?", userUUID).Scan(&hash)
 
 		if err != nil {
 			c.Error("Ошибка пользователя", http.StatusInternalServerError)
@@ -42,7 +42,7 @@ func (c *Context) ChangePasswordHandler() {
 			return
 		}
 
-		_, err = database.DB.Exec("UPDATE users SET password = ? WHERE uuid = ?", newHash, userUUID)
+		_, err = database.DB.ExecContext(c.Ctx, "UPDATE users SET password = ? WHERE uuid = ?", newHash, userUUID)
 		if err != nil {
 			c.Error("Ошибка сохранения", http.StatusInternalServerError)
 			log.Printf("Error: %v", err)
@@ -68,7 +68,7 @@ func (c *Context) ProfileHandler() {
 
 		var u models.User
 
-		err = database.DB.QueryRow("SELECT name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.Name, &u.Username)
+		err = database.DB.QueryRowContext(c.Ctx, "SELECT name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.Name, &u.Username)
 		if err != nil {
 			c.Error("Ошибка получения данных пользователя", http.StatusInternalServerError)
 			return
