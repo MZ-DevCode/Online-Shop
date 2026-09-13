@@ -3,6 +3,7 @@ package handlers
 import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
+	"database/sql"
 	"html/template"
 	"log"
 	"net/http"
@@ -91,7 +92,8 @@ func ShowCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := database.DB.Query(`
+	var rows *sql.Rows
+	rows, err = database.DB.Query(`
 		SELECT p.id, p.name, p.price, p.stock
 		FROM cart c
 		JOIN products p ON c.product_id = p.id
