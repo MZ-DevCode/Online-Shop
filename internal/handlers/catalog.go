@@ -30,7 +30,7 @@ func (c *Context) CatalogHandler() {
 	case "GET":
 		rows, err := database.DB.Query("SELECT id, name, price, stock FROM products")
 		if err != nil {
-			http.Error(c.W, err.Error(), http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, err.Error())
 			return
 		}
 		defer rows.Close()
@@ -41,14 +41,15 @@ func (c *Context) CatalogHandler() {
 			var p models.Product
 			err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
 			if err != nil {
-				http.Error(c.W, err.Error(), http.StatusInternalServerError)
+				c.Error(http.StatusInternalServerError, err.Error())
 				return
 			}
 			products = append(products, p)
 		}
+
 		tmpl, err := template.ParseFiles("templates/catalog.html")
 		if err != nil {
-			http.Error(c.W, err.Error(), http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -62,14 +63,14 @@ func (c *Context) AddToCart() {
 		productID := c.R.FormValue("product_id")
 		userUUID, err := c.getUserUUIDFromSession()
 		if err != nil {
-			http.Redirect(c.W, c.R, "/login", http.StatusSeeOther)
+			c.Redirect("/login")
 			return
 		}
 
 		var check int
 		err = database.DB.QueryRow("SELECT id FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID).Scan(&check)
 		if err == nil {
-			http.Redirect(c.W, c.R, "/catalog", http.StatusSeeOther)
+			c.Redirect("/catalog")
 			return
 		}
 
@@ -77,18 +78,18 @@ func (c *Context) AddToCart() {
 
 		_, err = database.DB.Exec(query, userUUID, productID)
 		if err != nil {
-			http.Error(c.W, err.Error(), http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		http.Redirect(c.W, c.R, "/catalog", http.StatusSeeOther)
+		c.Redirect("/catalog")
 	}
 }
 
 func (c *Context) ShowCart() {
 	userUUID, err := c.getUserUUIDFromSession()
 	if err != nil {
-		http.Redirect(c.W, c.R, "/login", http.StatusSeeOther)
+		c.Redirect("/login")
 		return
 	}
 
@@ -101,7 +102,7 @@ func (c *Context) ShowCart() {
 		`, userUUID)
 
 	if err != nil {
-		http.Error(c.W, err.Error(), http.StatusInternalServerError)
+		c.Error(http.StatusInternalServerError, err.Error())
 		return
 	}
 	defer rows.Close()
@@ -113,7 +114,7 @@ func (c *Context) ShowCart() {
 		var p models.Product
 		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
 		if err != nil {
-			http.Error(c.W, err.Error(), http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -137,7 +138,7 @@ func (c *Context) ShowCart() {
 	tmpl, err := template.ParseFiles("templates/cart.html")
 	if err != nil {
 		log.Printf("Ошибка загрузки шаблона cart.html: %v", err)
-		http.Error(c.W, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
 		return
 	}
 	tmpl.Execute(c.W, pageData)

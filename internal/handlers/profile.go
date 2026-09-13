@@ -14,7 +14,7 @@ func (c *Context) ChangePasswordHandler() {
 	case "POST":
 		userUUID, err := c.getUserUUIDFromSession()
 		if err != nil {
-			http.Redirect(c.W, c.R, "/login", http.StatusSeeOther)
+			c.Redirect("/login")
 			return
 		}
 
@@ -25,34 +25,34 @@ func (c *Context) ChangePasswordHandler() {
 		err = database.DB.QueryRow("SELECT password FROM users WHERE uuid = ?", userUUID).Scan(&hash)
 
 		if err != nil {
-			http.Error(c.W, "Ошибка пользователя", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка пользователя")
 			log.Printf("Error: %v", err)
 			return
 		}
 
 		if !utils.CheckPasswordHash(currentPassword, hash) {
-			http.Error(c.W, "Неверный текущий пароль", http.StatusUnauthorized)
+			c.Error(http.StatusUnauthorized, "Неверный текущий пароль")
 			return
 		}
 
 		newHash, err := utils.HashPassword(newPassword)
 		if err != nil {
-			http.Error(c.W, "Ошибка сервера", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка сервера")
 			log.Printf("Error: %v", err)
 			return
 		}
 
 		_, err = database.DB.Exec("UPDATE users SET password = ? WHERE uuid = ?", newHash, userUUID)
 		if err != nil {
-			http.Error(c.W, "Ошибка сохранения", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка сохранения")
 			log.Printf("Error: %v", err)
 			return
 		}
 
-		http.Redirect(c.W, c.R, "/profile", http.StatusSeeOther)
+		c.Redirect("/profile")
 
 	default:
-		http.Redirect(c.W, c.R, "/profile", http.StatusSeeOther)
+		c.Redirect("/profile")
 		return
 	}
 }
@@ -62,7 +62,7 @@ func (c *Context) ProfileHandler() {
 	case "GET":
 		userUUID, err := c.getUserUUIDFromSession()
 		if err != nil {
-			http.Redirect(c.W, c.R, "/login", http.StatusSeeOther)
+			c.Redirect("/login")
 			return
 		}
 
@@ -70,18 +70,18 @@ func (c *Context) ProfileHandler() {
 
 		err = database.DB.QueryRow("SELECT name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.Name, &u.Username)
 		if err != nil {
-			http.Error(c.W, "Ошибка получения данных пользователя", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка получения данных пользователя")
 			return
 		}
 
 		tmpl, err := template.ParseFiles("templates/profile.html")
 		if err != nil {
-			http.Error(c.W, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
 			return
 		}
 		tmpl.Execute(c.W, u)
 
 	default:
-		http.Redirect(c.W, c.R, "/login", http.StatusSeeOther)
+		c.Redirect("/login")
 	}
 }

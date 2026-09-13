@@ -30,7 +30,7 @@ func (c *Context) RegisterHandler() {
 	if c.R.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/register.html")
 		if err != nil {
-			http.Error(c.W, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
 			return
 		}
 		tmpl.Execute(c.W, nil)
@@ -47,18 +47,18 @@ func (c *Context) RegisterHandler() {
 
 		repeatPassword := c.R.FormValue("repeatPassword")
 		if u.Password != repeatPassword {
-			http.Error(c.W, "Пароли не совпадают", http.StatusBadRequest)
+			c.Error(http.StatusBadRequest, "Пароли не совпадают")
 			return
 		}
 
 		if value, errMsg := validatePassword(u.Password); !value {
-			http.Error(c.W, errMsg, http.StatusBadRequest)
+			c.Error(http.StatusBadRequest, errMsg)
 			return
 		}
 
 		hashedPassword, err := utils.HashPassword(u.Password)
 		if err != nil {
-			http.Error(c.W, "Ошибка шифрования пароля", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка шифрования пароля")
 			return
 		}
 		u.Password = hashedPassword
@@ -66,14 +66,14 @@ func (c *Context) RegisterHandler() {
 		query := "INSERT INTO users (uuid, name, username, password) VALUES (?, ?, ?, ?)"
 		_, err = database.DB.Exec(query, u.UUID, u.Name, u.Username, u.Password)
 		if err != nil {
-			http.Error(c.W, "Ошибка регистрации", http.StatusBadRequest)
+			c.Error(http.StatusBadRequest, "Ошибка регистрации")
 			return
 		}
 
 		sessionToken := utils.GenerateUUID()
 		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, u.UUID)
 		if err != nil {
-			http.Error(c.W, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Внутренняя ошибка сервера")
 			return
 		}
 
@@ -85,7 +85,7 @@ func (c *Context) RegisterHandler() {
 		}
 		http.SetCookie(c.W, &cookie)
 
-		http.Redirect(c.W, c.R, "/catalog", http.StatusSeeOther)
+		c.Redirect("/catalog")
 	}
 }
 
@@ -93,7 +93,7 @@ func (c *Context) LoginHandler() {
 	if c.R.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/login.html")
 		if err != nil {
-			http.Error(c.W, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
 			return
 		}
 		tmpl.Execute(c.W, nil)
@@ -112,15 +112,15 @@ func (c *Context) LoginHandler() {
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				http.Error(c.W, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
+				c.Error(http.StatusUnauthorized, "Неверное имя пользователя или пароль")
 				return
 			}
-			http.Error(c.W, "Ошибка поиска пользователя", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Ошибка поиска пользователя")
 			return
 		}
 
 		if !utils.CheckPasswordHash(password, hashedPassword) {
-			http.Error(c.W, "Неверное имя пользователя или пароль", http.StatusUnauthorized)
+			c.Error(http.StatusUnauthorized, "Неверное имя пользователя или пароль")
 			return
 		}
 
@@ -128,7 +128,7 @@ func (c *Context) LoginHandler() {
 
 		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, userUUID)
 		if err != nil {
-			http.Error(c.W, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+			c.Error(http.StatusInternalServerError, "Внутренняя ошибка сервера")
 			return
 		}
 
@@ -140,19 +140,19 @@ func (c *Context) LoginHandler() {
 		}
 		http.SetCookie(c.W, &cookie)
 
-		http.Redirect(c.W, c.R, "/catalog", http.StatusSeeOther)
+		c.Redirect("/catalog")
 	}
 }
 
 func (c *Context) LogoutHandler() {
 	cookie, err := c.R.Cookie("session_id")
 	if err != nil {
-		http.Error(c.W, "Unauthorized: ", http.StatusUnauthorized)
+		c.Error(http.StatusUnauthorized, "Unauthorized: ")
 		return
 	}
 	_, err = database.DB.Exec("DELETE FROM sessions WHERE token = ?", cookie.Value)
 	if err != nil {
-		http.Error(c.W, "Ошибка сервера при выходе", http.StatusInternalServerError)
+		c.Error(http.StatusInternalServerError, "Ошибка сервера при выходе")
 		return
 	}
 
@@ -165,5 +165,5 @@ func (c *Context) LogoutHandler() {
 	}
 
 	http.SetCookie(c.W, cookie)
-	http.Redirect(c.W, c.R, "/login", http.StatusSeeOther)
+	c.Redirect("/login")
 }
