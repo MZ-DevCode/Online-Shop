@@ -20,13 +20,13 @@ func (c *Context) CreateProductHandler() {
 
 		price, err := strconv.ParseFloat(c.R.FormValue("price"), 64)
 		if err != nil {
-			c.Error(http.StatusBadRequest, "Неверный формат цены")
+			c.Error("Неверный формат цены", http.StatusBadRequest)
 			return
 		}
 
 		stock, err := strconv.Atoi(c.R.FormValue("stock"))
 		if err != nil {
-			c.Error(http.StatusBadRequest, "Неверный формат количества")
+			c.Error("Неверный формат количества", http.StatusBadRequest)
 			return
 		}
 
@@ -41,7 +41,7 @@ func (c *Context) CreateProductHandler() {
 		_, err = database.DB.Exec("INSERT INTO products(user_uuid, name, price, description, stock) VALUES (?, ?, ?, ?, ?)", p.UserUUID, p.Name, p.Price, p.Description, p.Stock)
 		if err != nil {
 			log.Printf("Ошибка: %v", err)
-			c.Error(http.StatusInternalServerError, "Ошибка записи товара")
+			c.Error("Ошибка записи товара", http.StatusInternalServerError)
 			return
 		}
 
@@ -50,7 +50,7 @@ func (c *Context) CreateProductHandler() {
 	case "GET":
 		tmpl, err := template.ParseFiles("templates/add_product.html")
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
+			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
 		tmpl.Execute(c.W, nil)

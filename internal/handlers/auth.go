@@ -30,7 +30,7 @@ func (c *Context) RegisterHandler() {
 	if c.R.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/register.html")
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
+			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
 		tmpl.Execute(c.W, nil)
@@ -47,18 +47,18 @@ func (c *Context) RegisterHandler() {
 
 		repeatPassword := c.R.FormValue("repeatPassword")
 		if u.Password != repeatPassword {
-			c.Error(http.StatusBadRequest, "Пароли не совпадают")
+			c.Error("Пароли не совпадают", http.StatusBadRequest)
 			return
 		}
 
 		if value, errMsg := validatePassword(u.Password); !value {
-			c.Error(http.StatusBadRequest, errMsg)
+			c.Error(errMsg, http.StatusBadRequest)
 			return
 		}
 
 		hashedPassword, err := utils.HashPassword(u.Password)
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка шифрования пароля")
+			c.Error("Ошибка шифрования пароля", http.StatusInternalServerError)
 			return
 		}
 		u.Password = hashedPassword
@@ -66,14 +66,14 @@ func (c *Context) RegisterHandler() {
 		query := "INSERT INTO users (uuid, name, username, password) VALUES (?, ?, ?, ?)"
 		_, err = database.DB.Exec(query, u.UUID, u.Name, u.Username, u.Password)
 		if err != nil {
-			c.Error(http.StatusBadRequest, "Ошибка регистрации")
+			c.Error("Ошибка регистрации", http.StatusBadRequest)
 			return
 		}
 
 		sessionToken := utils.GenerateUUID()
 		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, u.UUID)
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Внутренняя ошибка сервера")
+			c.Error("Внутренняя ошибка сервера", http.StatusInternalServerError)
 			return
 		}
 
@@ -93,7 +93,7 @@ func (c *Context) LoginHandler() {
 	if c.R.Method == "GET" {
 		tmpl, err := template.ParseFiles("templates/login.html")
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
+			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
 		tmpl.Execute(c.W, nil)
@@ -112,15 +112,15 @@ func (c *Context) LoginHandler() {
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				c.Error(http.StatusUnauthorized, "Неверное имя пользователя или пароль")
+				c.Error("Неверное имя пользователя или пароль", http.StatusUnauthorized)
 				return
 			}
-			c.Error(http.StatusInternalServerError, "Ошибка поиска пользователя")
+			c.Error("Ошибка поиска пользователя", http.StatusInternalServerError)
 			return
 		}
 
 		if !utils.CheckPasswordHash(password, hashedPassword) {
-			c.Error(http.StatusUnauthorized, "Неверное имя пользователя или пароль")
+			c.Error("Неверное имя пользователя или пароль", http.StatusUnauthorized)
 			return
 		}
 
@@ -128,7 +128,7 @@ func (c *Context) LoginHandler() {
 
 		_, err = database.DB.Exec("INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, userUUID)
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Внутренняя ошибка сервера")
+			c.Error("Внутренняя ошибка сервера", http.StatusInternalServerError)
 			return
 		}
 
@@ -147,12 +147,12 @@ func (c *Context) LoginHandler() {
 func (c *Context) LogoutHandler() {
 	cookie, err := c.R.Cookie("session_id")
 	if err != nil {
-		c.Error(http.StatusUnauthorized, "Unauthorized: ")
+		c.Error("Unauthorized: ", http.StatusUnauthorized)
 		return
 	}
 	_, err = database.DB.Exec("DELETE FROM sessions WHERE token = ?", cookie.Value)
 	if err != nil {
-		c.Error(http.StatusInternalServerError, "Ошибка сервера при выходе")
+		c.Error("Ошибка сервера при выходе", http.StatusInternalServerError)
 		return
 	}
 

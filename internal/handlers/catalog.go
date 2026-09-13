@@ -30,7 +30,7 @@ func (c *Context) CatalogHandler() {
 	case "GET":
 		rows, err := database.DB.Query("SELECT id, name, price, stock FROM products")
 		if err != nil {
-			c.Error(http.StatusInternalServerError, err.Error())
+			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
@@ -41,7 +41,7 @@ func (c *Context) CatalogHandler() {
 			var p models.Product
 			err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
 			if err != nil {
-				c.Error(http.StatusInternalServerError, err.Error())
+				c.Error(err.Error(), http.StatusInternalServerError)
 				return
 			}
 			products = append(products, p)
@@ -49,7 +49,7 @@ func (c *Context) CatalogHandler() {
 
 		tmpl, err := template.ParseFiles("templates/catalog.html")
 		if err != nil {
-			c.Error(http.StatusInternalServerError, err.Error())
+			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -78,7 +78,7 @@ func (c *Context) AddToCart() {
 
 		_, err = database.DB.Exec(query, userUUID, productID)
 		if err != nil {
-			c.Error(http.StatusInternalServerError, err.Error())
+			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -102,7 +102,7 @@ func (c *Context) ShowCart() {
 		`, userUUID)
 
 	if err != nil {
-		c.Error(http.StatusInternalServerError, err.Error())
+		c.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -114,7 +114,7 @@ func (c *Context) ShowCart() {
 		var p models.Product
 		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
 		if err != nil {
-			c.Error(http.StatusInternalServerError, err.Error())
+			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -138,7 +138,7 @@ func (c *Context) ShowCart() {
 	tmpl, err := template.ParseFiles("templates/cart.html")
 	if err != nil {
 		log.Printf("Ошибка загрузки шаблона cart.html: %v", err)
-		c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
+		c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 		return
 	}
 	tmpl.Execute(c.W, pageData)

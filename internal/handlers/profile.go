@@ -25,26 +25,26 @@ func (c *Context) ChangePasswordHandler() {
 		err = database.DB.QueryRow("SELECT password FROM users WHERE uuid = ?", userUUID).Scan(&hash)
 
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка пользователя")
+			c.Error("Ошибка пользователя", http.StatusInternalServerError)
 			log.Printf("Error: %v", err)
 			return
 		}
 
 		if !utils.CheckPasswordHash(currentPassword, hash) {
-			c.Error(http.StatusUnauthorized, "Неверный текущий пароль")
+			c.Error("Неверный текущий пароль", http.StatusUnauthorized)
 			return
 		}
 
 		newHash, err := utils.HashPassword(newPassword)
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка сервера")
+			c.Error("Ошибка сервера", http.StatusInternalServerError)
 			log.Printf("Error: %v", err)
 			return
 		}
 
 		_, err = database.DB.Exec("UPDATE users SET password = ? WHERE uuid = ?", newHash, userUUID)
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка сохранения")
+			c.Error("Ошибка сохранения", http.StatusInternalServerError)
 			log.Printf("Error: %v", err)
 			return
 		}
@@ -70,13 +70,13 @@ func (c *Context) ProfileHandler() {
 
 		err = database.DB.QueryRow("SELECT name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.Name, &u.Username)
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка получения данных пользователя")
+			c.Error("Ошибка получения данных пользователя", http.StatusInternalServerError)
 			return
 		}
 
 		tmpl, err := template.ParseFiles("templates/profile.html")
 		if err != nil {
-			c.Error(http.StatusInternalServerError, "Ошибка загрузки шаблона")
+			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 			return
 		}
 		tmpl.Execute(c.W, u)

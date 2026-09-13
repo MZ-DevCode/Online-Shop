@@ -17,6 +17,6 @@ func (c *Context) Redirect(direct string) {
 	http.Redirect(c.W, c.R, direct, http.StatusSeeOther)
 }
 
-func (c *Context) Error(code int, message string) {
+func (c *Context) Error(message string, code int) {
 	http.Error(c.W, message, code)
 }
