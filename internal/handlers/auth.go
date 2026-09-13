@@ -152,7 +152,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err = database.DB.Exec("DELETE FROM sessions WHERE token = ?", cookie.Value)
 	if err != nil {
-		http.Error("")
+		http.Error(w, "Ошибка сервера при выходе", http.StatusInternalServerError)
 		return
 	}
 
