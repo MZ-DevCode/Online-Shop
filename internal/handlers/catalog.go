@@ -9,8 +9,13 @@ import (
 	"net/http"
 )
 
-func getUserUUIDFromSession(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("session_id")
+type Context struct {
+	W http.ResponseWriter
+	R *http.Request
+}
+
+func (c *Context) getUserUUIDFromSession() (string, error) {
+	cookie, err := c.R.Cookie("session_id")
 	if err != nil {
 		log.Printf("Error: %v", err)
 		return "", err
@@ -25,12 +30,12 @@ func getUserUUIDFromSession(r *http.Request) (string, error) {
 	return userUUID, nil
 }
 
-func CatalogHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
+func (c *Context) CatalogHandler() {
+	switch c.R.Method {
 	case "GET":
 		rows, err := database.DB.Query("SELECT id, name, price, stock FROM products")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(c.W, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
@@ -41,35 +46,35 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 			var p models.Product
 			err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(c.W, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			products = append(products, p)
 		}
 		tmpl, err := template.ParseFiles("templates/catalog.html")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(c.W, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		tmpl.Execute(w, products)
+		tmpl.Execute(c.W, products)
 	}
 }
 
-func AddToCart(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
+func (c *Context) AddToCart() {
+	switch c.R.Method {
 	case "POST":
-		productID := r.FormValue("product_id")
-		userUUID, err := getUserUUIDFromSession(r)
+		productID := c.R.FormValue("product_id")
+		userUUID, err := c.getUserUUIDFromSession()
 		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			http.Redirect(c.W, c.R, "/login", http.StatusSeeOther)
 			return
 		}
 
 		var check int
 		err = database.DB.QueryRow("SELECT id FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID).Scan(&check)
 		if err == nil {
-			http.Redirect(w, r, "/catalog", http.StatusSeeOther)
+			http.Redirect(c.W, c.R, "/catalog", http.StatusSeeOther)
 			return
 		}
 
@@ -77,31 +82,31 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 
 		_, err = database.DB.Exec(query, userUUID, productID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(c.W, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		http.Redirect(w, r, "/catalog", http.StatusSeeOther)
+		http.Redirect(c.W, c.R, "/catalog", http.StatusSeeOther)
 	}
 }
 
-func ShowCart(w http.ResponseWriter, r *http.Request) {
-	userUUID, err := getUserUUIDFromSession(r)
+func (c *Context) ShowCart() {
+	userUUID, err := c.getUserUUIDFromSession()
 	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		http.Redirect(c.W, c.R, "/login", http.StatusSeeOther)
 		return
 	}
 
 	var rows *sql.Rows
 	rows, err = database.DB.Query(`
 		SELECT p.id, p.name, p.price, p.stock
-		FROM cart c
-		JOIN products p ON c.product_id = p.id
-		WHERE c.user_uuid = ?
+		FROM cart cart_alias
+		JOIN products p ON cart_alias.product_id = p.id
+		WHERE cart_alias.user_uuid = ?
 		`, userUUID)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(c.W, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -113,7 +118,7 @@ func ShowCart(w http.ResponseWriter, r *http.Request) {
 		var p models.Product
 		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(c.W, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -137,9 +142,12 @@ func ShowCart(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/cart.html")
 	if err != nil {
 		log.Printf("Ошибка загрузки шаблона cart.html: %v", err)
-		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		http.Error(c.W, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, pageData)
+	tmpl.Execute(c.W, pageData)
+}
+
+func (c *Context) RemoveFromCart() {
 
 }
