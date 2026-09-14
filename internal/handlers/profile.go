@@ -49,7 +49,7 @@ func (c *Context) ChangePasswordHandler() {
 			return
 		}
 
-		c.Redirect("/profile")
+		c.LogoutHandler()
 
 	default:
 		c.Redirect("/profile")
