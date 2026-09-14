@@ -106,6 +106,7 @@ func (c *Context) AddToCart() {
 		}
 
 		c.Redirect("/catalog")
+
 	}
 }
 
