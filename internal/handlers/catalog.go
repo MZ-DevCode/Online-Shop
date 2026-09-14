@@ -3,7 +3,6 @@ package handlers
 import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
-	"database/sql"
 	"html/template"
 	"log"
 	"net/http"
@@ -67,17 +66,41 @@ func (c *Context) AddToCart() {
 			return
 		}
 
-		var check int
-		err = database.DB.QueryRowContext(c.Ctx, "SELECT id FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID).Scan(&check)
-		if err == nil {
-			c.Redirect("/catalog")
+		tx, err := database.DB.BeginTx(c.Ctx, nil)
+		if err != nil {
+			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		query := "INSERT INTO cart(user_uuid, product_id) VALUES (?, ?)"
+		defer tx.Rollback()
 
-		_, err = database.DB.ExecContext(c.Ctx, query, userUUID, productID)
+		var stock int
+		err = tx.QueryRowContext(c.Ctx, "SELECT stock FROM products WHERE id = ?", productID).Scan(&stock)
+		if err != nil || stock <= 0 {
+			c.Error("Товар закончился", http.StatusBadRequest)
+			return
+		}
+
+		query := `
+			INSERT INTO cart (user_uuid, product_id, quantity)
+			VALUES (?, ?, 1)
+			ON CONFLICT(user_uuid, product_id)
+			DO UPDATE SET quantity = quantity + 1
+		`
+
+		_, err = tx.ExecContext(c.Ctx, query, userUUID, productID)
 		if err != nil {
+			c.Error(err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_, err = tx.ExecContext(c.Ctx, "UPDATE products SET stock = stock - 1 WHERE id = ?", productID)
+		if err != nil {
+			c.Error(err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err = tx.Commit(); err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -93,12 +116,11 @@ func (c *Context) ShowCart() {
 		return
 	}
 
-	var rows *sql.Rows
-	rows, err = database.DB.QueryContext(c.Ctx, `
-		SELECT p.id, p.name, p.price, p.stock
-		FROM cart cart_alias
-		JOIN products p ON cart_alias.product_id = p.id
-		WHERE cart_alias.user_uuid = ?
+	rows, err := database.DB.QueryContext(c.Ctx, `
+		SELECT p.id, p.name, p.price, p.stock, c_alias.quantity
+		FROM cart c_alias
+		JOIN products p ON c_alias.product_id = p.id
+		WHERE c_alias.user_uuid = ?
 		`, userUUID)
 
 	if err != nil {
@@ -112,18 +134,21 @@ func (c *Context) ShowCart() {
 
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
+		var quantity int
+		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &quantity)
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		itemPrice := p.Price * float64(quantity)
+
 		item := models.CartItem{
 			ID:             p.ID,
 			Name:           p.Name,
 			Price:          p.Price,
-			Quantity:       1,
-			TotalItemPrice: p.Price,
+			Quantity:       quantity,
+			TotalItemPrice: itemPrice,
 		}
 
 		totalPrice += item.TotalItemPrice
