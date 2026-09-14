@@ -10,6 +10,11 @@ import (
 	"net/http"
 )
 
+var (
+	catalogTmpl = template.Must(template.ParseFiles("templates/catalog.html"))
+	cartTmpl    = template.Must(template.ParseFiles("templates/cart.html"))
+)
+
 func (c *Context) getUserUUIDFromSession() (string, error) {
 	cookie, err := c.R.Cookie("session_id")
 	if err != nil {
@@ -52,13 +57,13 @@ func (c *Context) CatalogHandler() {
 			return
 		}
 
-		tmpl, err := template.ParseFiles("templates/catalog.html")
-		if err != nil {
+		if err := catalogTemplate.Execute(c.W, products); err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		tmpl.Execute(c.W, products)
+	default:
+		c.Error("Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -95,6 +100,7 @@ func (c *Context) AddToCart() {
 
 		if stock <= 0 {
 			c.Error("Товар закончился", http.StatusBadRequest)
+			return
 		}
 
 		query := `
@@ -122,6 +128,10 @@ func (c *Context) AddToCart() {
 		}
 
 		c.Redirect("/catalog")
+
+	default:
+		c.Error("Method not allowed", http.StatusMethodNotAllowed)
+		return
 
 	}
 }
@@ -177,13 +187,11 @@ func (c *Context) ShowCart() {
 		TotalPrice: totalPrice,
 	}
 
-	tmpl, err := template.ParseFiles("templates/cart.html")
-	if err != nil {
+	if err := cartTmpl.Execute(c.W, pageData); err != nil {
 		log.Printf("Ошибка загрузки шаблона cart.html: %v", err)
 		c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(c.W, pageData)
 }
 
 func (c *Context) RemoveFromCart() {
