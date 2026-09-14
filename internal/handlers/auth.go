@@ -86,7 +86,9 @@ func (c *Context) RegisterHandler() {
 		}
 
 		sessionToken := utils.GenerateUUID()
-		_, err = tx.ExecContext(ctx, "INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, u.UUID)
+		expiresAt := time.Now().Add(7 * 24 * time.Hour)
+
+		_, err = tx.ExecContext(ctx, "INSERT INTO sessions (token, user_uuid, expires_at) VALUES (?, ?, ?)", sessionToken, u.UUID, expiresAt)
 		if err != nil {
 			c.Error("Внутренняя ошибка сервера", http.StatusInternalServerError)
 			return
@@ -102,6 +104,7 @@ func (c *Context) RegisterHandler() {
 			Value:    sessionToken,
 			Path:     "/",
 			HttpOnly: true,
+			MaxAge:   7 * 24 * 60 * 60,
 		}
 		http.SetCookie(c.W, &cookie)
 
@@ -146,9 +149,12 @@ func (c *Context) LoginHandler() {
 			return
 		}
 
-		sessionToken := utils.GenerateUUID()
+		_, _ = database.DB.ExecContext(ctx, "DELETE FROM sessions WHERE user_uuid = ? AND expires_at <= CURRENT_TIMESTAMP", userUUID)
 
-		_, err = database.DB.ExecContext(ctx, "INSERT INTO sessions (token, user_uuid) VALUES (?, ?)", sessionToken, userUUID)
+		sessionToken := utils.GenerateUUID()
+		expiresAt := time.Now().Add(7 * 24 * time.Hour)
+
+		_, err = database.DB.ExecContext(ctx, "INSERT INTO sessions (token, user_uuid, expires_at) VALUES (?, ?, ?)", sessionToken, userUUID, expiresAt)
 		if err != nil {
 			c.Error("Внутренняя ошибка сервера", http.StatusInternalServerError)
 			return
@@ -159,6 +165,7 @@ func (c *Context) LoginHandler() {
 			Value:    sessionToken,
 			Path:     "/",
 			HttpOnly: true,
+			MaxAge:   7 * 24 * 60 * 60,
 		}
 		http.SetCookie(c.W, &cookie)
 
