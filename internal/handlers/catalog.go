@@ -3,6 +3,8 @@ package handlers
 import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
+	"database/sql"
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -11,7 +13,6 @@ import (
 func (c *Context) getUserUUIDFromSession() (string, error) {
 	cookie, err := c.R.Cookie("session_id")
 	if err != nil {
-		log.Printf("Error: %v", err)
 		return "", err
 	}
 
@@ -46,6 +47,11 @@ func (c *Context) CatalogHandler() {
 			products = append(products, p)
 		}
 
+		if err := rows.Err(); err != nil {
+			c.Error(err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		tmpl, err := template.ParseFiles("templates/catalog.html")
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
@@ -76,9 +82,19 @@ func (c *Context) AddToCart() {
 
 		var stock int
 		err = tx.QueryRowContext(c.Ctx, "SELECT stock FROM products WHERE id = ?", productID).Scan(&stock)
-		if err != nil || stock <= 0 {
-			c.Error("Товар закончился", http.StatusBadRequest)
+
+		if errors.Is(err, sql.ErrNoRows) {
+			c.Error("Товар не найден", http.StatusNotFound)
 			return
+		}
+
+		if err != nil {
+			c.Error("Ошибка базы данных", http.StatusInternalServerError)
+			return
+		}
+
+		if stock <= 0 {
+			c.Error("Товар закончился", http.StatusBadRequest)
 		}
 
 		query := `
@@ -96,12 +112,12 @@ func (c *Context) AddToCart() {
 
 		_, err = tx.ExecContext(c.Ctx, "UPDATE products SET stock = stock - 1 WHERE id = ?", productID)
 		if err != nil {
-			c.Error(err.Error(), http.StatusInternalServerError)
+			c.Error("Ошибка обновления товара", http.StatusInternalServerError)
 			return
 		}
 
 		if err = tx.Commit(); err != nil {
-			c.Error(err.Error(), http.StatusInternalServerError)
+			c.Error("Ошибка коммита", http.StatusInternalServerError)
 			return
 		}
 
@@ -190,6 +206,7 @@ func (c *Context) RemoveFromCart() {
 		c.Redirect("/cart")
 
 	default:
-		c.Redirect("/cart")
+		c.Error("Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 }
