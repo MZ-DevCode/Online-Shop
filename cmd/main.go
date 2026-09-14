@@ -35,7 +35,7 @@ func main() {
 	mux.HandleFunc("/profile/password", handlers.MakeHandler((*handlers.Context).ChangePasswordHandler))
 	mux.HandleFunc("/profile/product/add", handlers.MakeHandler((*handlers.Context).CreateProductHandler))
 	mux.HandleFunc("/logout", handlers.MakeHandler((*handlers.Context).LogoutHandler))
-	mux.HandleFunc("cart/remove", handlers.MakeHandler((*handlers.Context).RemoveFromCart))
+	mux.HandleFunc("/cart/remove", handlers.MakeHandler((*handlers.Context).RemoveFromCart))
 
 	server := &http.Server{
 		Addr:         ":8080",

@@ -4,9 +4,15 @@ import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
 	"WEBSITE/internal/utils"
+	"context"
 	"html/template"
 	"log"
 	"net/http"
+	"time"
+)
+
+var (
+	profileTmpl = template.Must(template.ParseFiles("templates/profile.html"))
 )
 
 func (c *Context) ChangePasswordHandler() {
@@ -21,9 +27,16 @@ func (c *Context) ChangePasswordHandler() {
 		currentPassword := c.R.FormValue("current_password")
 		newPassword := c.R.FormValue("new_password")
 
-		var hash string
-		err = database.DB.QueryRowContext(c.Ctx, "SELECT password FROM users WHERE uuid = ?", userUUID).Scan(&hash)
+		if value, errMsg := validatePassword(newPassword); !value {
+			c.Error(errMsg, http.StatusBadRequest)
+			return
+		}
 
+		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+		defer cancel()
+
+		var hash string
+		err = database.DB.QueryRowContext(ctx, "SELECT password FROM users WHERE uuid = ?", userUUID).Scan(&hash)
 		if err != nil {
 			c.Error("Ошибка пользователя", http.StatusInternalServerError)
 			log.Printf("Error: %v", err)
@@ -42,18 +55,17 @@ func (c *Context) ChangePasswordHandler() {
 			return
 		}
 
-		_, err = database.DB.ExecContext(c.Ctx, "UPDATE users SET password = ? WHERE uuid = ?", newHash, userUUID)
+		_, err = database.DB.ExecContext(ctx, "UPDATE users SET password = ? WHERE uuid = ?", newHash, userUUID)
 		if err != nil {
 			c.Error("Ошибка сохранения", http.StatusInternalServerError)
 			log.Printf("Error: %v", err)
 			return
 		}
 
-		c.Redirect("/profile")
+		c.LogoutHandler()
 
 	default:
 		c.Redirect("/profile")
-		return
 	}
 }
 
@@ -66,22 +78,21 @@ func (c *Context) ProfileHandler() {
 			return
 		}
 
-		var u models.User
+		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+		defer cancel()
 
-		err = database.DB.QueryRowContext(c.Ctx, "SELECT name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.Name, &u.Username)
+		var u models.User
+		err = database.DB.QueryRowContext(ctx, "SELECT name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.Name, &u.Username)
 		if err != nil {
 			c.Error("Ошибка получения данных пользователя", http.StatusInternalServerError)
 			return
 		}
 
-		tmpl, err := template.ParseFiles("templates/profile.html")
-		if err != nil {
+		if err := profileTmpl.Execute(c.W, u); err != nil {
 			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
-			return
 		}
-		tmpl.Execute(c.W, u)
 
 	default:
-		c.Redirect("/login")
+		c.Error("Method not allowed", http.StatusMethodNotAllowed)
 	}
 }

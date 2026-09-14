@@ -3,21 +3,31 @@ package handlers
 import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
+	"context"
 	"database/sql"
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
+	"time"
+)
+
+var (
+	catalogTmpl = template.Must(template.ParseFiles("templates/catalog.html"))
+	cartTmpl    = template.Must(template.ParseFiles("templates/cart.html"))
 )
 
 func (c *Context) getUserUUIDFromSession() (string, error) {
 	cookie, err := c.R.Cookie("session_id")
 	if err != nil {
-		log.Printf("Error: %v", err)
 		return "", err
 	}
 
+	ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+	defer cancel()
+
 	var userUUID string
-	err = database.DB.QueryRowContext(c.Ctx, "SELECT user_uuid FROM sessions WHERE token = ?", cookie.Value).Scan(&userUUID)
+	err = database.DB.QueryRowContext(ctx, "SELECT user_uuid FROM sessions WHERE token = ?", cookie.Value).Scan(&userUUID)
 	if err != nil {
 		return "", err
 	}
@@ -28,7 +38,10 @@ func (c *Context) getUserUUIDFromSession() (string, error) {
 func (c *Context) CatalogHandler() {
 	switch c.R.Method {
 	case "GET":
-		rows, err := database.DB.QueryContext(c.Ctx, "SELECT id, name, price, stock FROM products")
+		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+		defer cancel()
+
+		rows, err := database.DB.QueryContext(ctx, "SELECT id, name, price, stock FROM products")
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
@@ -47,13 +60,18 @@ func (c *Context) CatalogHandler() {
 			products = append(products, p)
 		}
 
-		tmpl, err := template.ParseFiles("templates/catalog.html")
-		if err != nil {
+		if err := rows.Err(); err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		tmpl.Execute(c.W, products)
+		if err := catalogTmpl.Execute(c.W, products); err != nil {
+			c.Error(err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+	default:
+		c.Error("Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -67,22 +85,67 @@ func (c *Context) AddToCart() {
 			return
 		}
 
-		var check int
-		err = database.DB.QueryRowContext(c.Ctx, "SELECT id FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID).Scan(&check)
-		if err == nil {
-			c.Redirect("/catalog")
-			return
-		}
+		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+		defer cancel()
 
-		query := "INSERT INTO cart(user_uuid, product_id) VALUES (?, ?)"
-
-		_, err = database.DB.ExecContext(c.Ctx, query, userUUID, productID)
+		tx, err := database.DB.BeginTx(ctx, nil)
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		defer func() {
+			if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+				log.Printf("Ошибка отката транзакции: %v", err)
+			}
+		}()
+
+		var stock int
+		err = tx.QueryRowContext(ctx, "SELECT stock FROM products WHERE id = ?", productID).Scan(&stock)
+
+		if errors.Is(err, sql.ErrNoRows) {
+			c.Error("Товар не найден", http.StatusNotFound)
+			return
+		}
+
+		if err != nil {
+			c.Error("Ошибка базы данных", http.StatusInternalServerError)
+			return
+		}
+
+		if stock <= 0 {
+			c.Error("Товар закончился", http.StatusBadRequest)
+			return
+		}
+
+		query := `
+			INSERT INTO cart (user_uuid, product_id, quantity)
+			VALUES (?, ?, 1)
+			ON CONFLICT(user_uuid, product_id)
+			DO UPDATE SET quantity = quantity + 1
+		`
+
+		_, err = tx.ExecContext(ctx, query, userUUID, productID)
+		if err != nil {
+			c.Error(err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_, err = tx.ExecContext(ctx, "UPDATE products SET stock = stock - 1 WHERE id = ?", productID)
+		if err != nil {
+			c.Error("Ошибка обновления товара", http.StatusInternalServerError)
+			return
+		}
+
+		if err = tx.Commit(); err != nil {
+			c.Error("Ошибка коммита", http.StatusInternalServerError)
+			return
+		}
+
 		c.Redirect("/catalog")
+
+	default:
+		c.Error("Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -93,12 +156,14 @@ func (c *Context) ShowCart() {
 		return
 	}
 
-	var rows *sql.Rows
-	rows, err = database.DB.QueryContext(c.Ctx, `
-		SELECT p.id, p.name, p.price, p.stock
-		FROM cart cart_alias
-		JOIN products p ON cart_alias.product_id = p.id
-		WHERE cart_alias.user_uuid = ?
+	ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+	defer cancel()
+
+	rows, err := database.DB.QueryContext(ctx, `
+		SELECT p.id, p.name, p.price, p.stock, c_alias.quantity
+		FROM cart c_alias
+		JOIN products p ON c_alias.product_id = p.id
+		WHERE c_alias.user_uuid = ?
 		`, userUUID)
 
 	if err != nil {
@@ -112,18 +177,21 @@ func (c *Context) ShowCart() {
 
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
+		var quantity int
+		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &quantity)
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		itemPrice := p.Price * float64(quantity)
+
 		item := models.CartItem{
 			ID:             p.ID,
 			Name:           p.Name,
 			Price:          p.Price,
-			Quantity:       1,
-			TotalItemPrice: p.Price,
+			Quantity:       quantity,
+			TotalItemPrice: itemPrice,
 		}
 
 		totalPrice += item.TotalItemPrice
@@ -135,13 +203,11 @@ func (c *Context) ShowCart() {
 		TotalPrice: totalPrice,
 	}
 
-	tmpl, err := template.ParseFiles("templates/cart.html")
-	if err != nil {
+	if err := cartTmpl.Execute(c.W, pageData); err != nil {
 		log.Printf("Ошибка загрузки шаблона cart.html: %v", err)
 		c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(c.W, pageData)
 }
 
 func (c *Context) RemoveFromCart() {
@@ -153,9 +219,12 @@ func (c *Context) RemoveFromCart() {
 			return
 		}
 
+		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+		defer cancel()
+
 		productID := c.R.FormValue("product_id")
 
-		_, err = database.DB.ExecContext(c.Ctx, "DELETE FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID)
+		_, err = database.DB.ExecContext(ctx, "DELETE FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID)
 		if err != nil {
 			c.Error("Error", http.StatusInternalServerError)
 			return
@@ -164,6 +233,7 @@ func (c *Context) RemoveFromCart() {
 		c.Redirect("/cart")
 
 	default:
-		c.Redirect("/cart")
+		c.Error("Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 }

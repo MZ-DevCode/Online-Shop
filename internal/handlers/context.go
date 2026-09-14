@@ -8,7 +8,7 @@ import (
 type Context struct {
 	W   http.ResponseWriter
 	R   *http.Request
-	Ctx context.Context // 1. Добавляем поле сюда
+	Ctx context.Context
 }
 
 func MakeHandler(f func(c *Context)) http.HandlerFunc {
@@ -16,7 +16,7 @@ func MakeHandler(f func(c *Context)) http.HandlerFunc {
 		f(&Context{
 			W:   w,
 			R:   r,
-			Ctx: r.Context(), // 2. Инициализируем один раз для всех запросов
+			Ctx: r.Context(),
 		})
 	}
 }

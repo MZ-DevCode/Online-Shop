@@ -18,6 +18,9 @@ func InitDB() {
 		return
 	}
 
+	DB.SetMaxOpenConns(1)
+	DB.SetMaxIdleConns(1)
+
 	err = DB.Ping()
 	if err != nil {
 		log.Println("База данных не отвечает: ", err)
@@ -56,13 +59,15 @@ func InitDB() {
 	}
 
 	createCartTable := `
-	CREATE TABLE IF NOT EXISTS cart(
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_uuid TEXT NOT NULL,
-		product_id INTEGER NOT NULL,
-		FOREIGN KEY (user_uuid) REFERENCES users(uuid),
-		FOREIGN KEY (product_id) REFERENCES products(id)
-	);`
+		CREATE TABLE IF NOT EXISTS cart(
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_uuid TEXT NOT NULL,
+			product_id INTEGER NOT NULL,
+			quantity INTEGER NOT NULL DEFAULT 1,
+			FOREIGN KEY (user_uuid) REFERENCES users(uuid),
+			FOREIGN KEY (product_id) REFERENCES products(id),
+			UNIQUE(user_uuid, product_id)
+		);`
 
 	_, err = DB.Exec(createCartTable)
 	if err != nil {
