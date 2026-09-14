@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"time"
 )
@@ -70,12 +71,16 @@ func (c *Context) RegisterHandler() {
 		defer cancel()
 
 		tx, err := database.DB.BeginTx(ctx, nil)
+
 		if err != nil {
 			c.Error("Ошибка сервера", http.StatusInternalServerError)
 			return
 		}
+
 		defer func() {
-			_ = tx.Rollback()
+			if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+				log.Printf("Ошибка отката транзакции")
+			}
 		}()
 
 		query := "INSERT INTO users (uuid, name, username, password) VALUES (?, ?, ?, ?)"

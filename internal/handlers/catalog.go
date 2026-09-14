@@ -94,7 +94,11 @@ func (c *Context) AddToCart() {
 			return
 		}
 
-		defer tx.Rollback()
+		defer func() {
+			if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+				log.Printf("Ошибка отката транзакции: %v", err)
+			}
+		}()
 
 		var stock int
 		err = tx.QueryRowContext(ctx, "SELECT stock FROM products WHERE id = ?", productID).Scan(&stock)
@@ -142,8 +146,6 @@ func (c *Context) AddToCart() {
 
 	default:
 		c.Error("Method not allowed", http.StatusMethodNotAllowed)
-		return
-
 	}
 }
 
