@@ -3,11 +3,13 @@ package handlers
 import (
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/models"
+	"context"
 	"database/sql"
 	"errors"
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 )
 
 var (
@@ -21,8 +23,11 @@ func (c *Context) getUserUUIDFromSession() (string, error) {
 		return "", err
 	}
 
+	ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+	defer cancel()
+
 	var userUUID string
-	err = database.DB.QueryRowContext(c.Ctx, "SELECT user_uuid FROM sessions WHERE token = ?", cookie.Value).Scan(&userUUID)
+	err = database.DB.QueryRowContext(ctx, "SELECT user_uuid FROM sessions WHERE token = ?", cookie.Value).Scan(&userUUID)
 	if err != nil {
 		return "", err
 	}
@@ -33,7 +38,10 @@ func (c *Context) getUserUUIDFromSession() (string, error) {
 func (c *Context) CatalogHandler() {
 	switch c.R.Method {
 	case "GET":
-		rows, err := database.DB.QueryContext(c.Ctx, "SELECT id, name, price, stock FROM products")
+		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+		defer cancel()
+
+		rows, err := database.DB.QueryContext(ctx, "SELECT id, name, price, stock FROM products")
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
@@ -57,7 +65,7 @@ func (c *Context) CatalogHandler() {
 			return
 		}
 
-		if err := catalogTemplate.Execute(c.W, products); err != nil {
+		if err := catalogTmpl.Execute(c.W, products); err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -77,7 +85,10 @@ func (c *Context) AddToCart() {
 			return
 		}
 
-		tx, err := database.DB.BeginTx(c.Ctx, nil)
+		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+		defer cancel()
+
+		tx, err := database.DB.BeginTx(ctx, nil)
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
@@ -86,7 +97,7 @@ func (c *Context) AddToCart() {
 		defer tx.Rollback()
 
 		var stock int
-		err = tx.QueryRowContext(c.Ctx, "SELECT stock FROM products WHERE id = ?", productID).Scan(&stock)
+		err = tx.QueryRowContext(ctx, "SELECT stock FROM products WHERE id = ?", productID).Scan(&stock)
 
 		if errors.Is(err, sql.ErrNoRows) {
 			c.Error("Товар не найден", http.StatusNotFound)
@@ -110,13 +121,13 @@ func (c *Context) AddToCart() {
 			DO UPDATE SET quantity = quantity + 1
 		`
 
-		_, err = tx.ExecContext(c.Ctx, query, userUUID, productID)
+		_, err = tx.ExecContext(ctx, query, userUUID, productID)
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		_, err = tx.ExecContext(c.Ctx, "UPDATE products SET stock = stock - 1 WHERE id = ?", productID)
+		_, err = tx.ExecContext(ctx, "UPDATE products SET stock = stock - 1 WHERE id = ?", productID)
 		if err != nil {
 			c.Error("Ошибка обновления товара", http.StatusInternalServerError)
 			return
@@ -143,7 +154,10 @@ func (c *Context) ShowCart() {
 		return
 	}
 
-	rows, err := database.DB.QueryContext(c.Ctx, `
+	ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+	defer cancel()
+
+	rows, err := database.DB.QueryContext(ctx, `
 		SELECT p.id, p.name, p.price, p.stock, c_alias.quantity
 		FROM cart c_alias
 		JOIN products p ON c_alias.product_id = p.id
@@ -203,9 +217,12 @@ func (c *Context) RemoveFromCart() {
 			return
 		}
 
+		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+		defer cancel()
+
 		productID := c.R.FormValue("product_id")
 
-		_, err = database.DB.ExecContext(c.Ctx, "DELETE FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID)
+		_, err = database.DB.ExecContext(ctx, "DELETE FROM cart WHERE user_uuid = ? AND product_id = ?", userUUID, productID)
 		if err != nil {
 			c.Error("Error", http.StatusInternalServerError)
 			return
