@@ -37,10 +37,25 @@ func (c *Context) CheckoutHandler() {
 			}
 		}()
 
-		rows, err := tx.QueryContext(ctx, "SELECT с.quantity, p.price FROM cart c JOIN products p ON c.product_id = p.id WHERE id = user_uuid", userUUID)
-		for rows.Next() {
-
+		rows, err := tx.QueryContext(ctx, `SELECT c.quantity, p.price FROM cart c JOIN products p ON c.product_id = p.id WHERE c.user_uuid = ?`, userUUID)
+		if err != nil {
+			c.Error("Ошибка расчета корзины", http.StatusInternalServerError)
 		}
+
+		var totalPrice float64
+		for rows.Next() {
+			var quantity int
+			var price float64
+
+			err := rows.Scan(&quantity, &price)
+			if err != nil {
+				c.Error(err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			totalPrice += float64(quantity) * price
+		}
+		defer rows.Close()
 
 		c.Redirect("/cart")
 
