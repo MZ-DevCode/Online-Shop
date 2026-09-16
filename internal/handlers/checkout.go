@@ -40,6 +40,7 @@ func (c *Context) CheckoutHandler() {
 		rows, err := tx.QueryContext(ctx, `SELECT c.quantity, p.price FROM cart c JOIN products p ON c.product_id = p.id WHERE c.user_uuid = ?`, userUUID)
 		if err != nil {
 			c.Error("Ошибка расчета корзины", http.StatusInternalServerError)
+			return
 		}
 
 		var totalPrice float64
@@ -54,6 +55,12 @@ func (c *Context) CheckoutHandler() {
 			}
 
 			totalPrice += float64(quantity) * price
+
+			if quantity <= 0 {
+				customError := errors.New("Товар с недопустимым количеством")
+				c.Error(customError.Error(), http.StatusBadRequest)
+				return
+			}
 		}
 		defer rows.Close()
 
