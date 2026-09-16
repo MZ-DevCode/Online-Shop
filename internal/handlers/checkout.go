@@ -91,6 +91,8 @@ func (c *Context) CheckoutHandler() {
 			return
 		}
 
+		c.Redirect("/cart")
+
 	case "GET":
 		if err := cartTmpl.Execute(c.W, nil); err != nil {
 			c.Error("Ошибка отображения", http.StatusInternalServerError)

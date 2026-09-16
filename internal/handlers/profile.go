@@ -88,6 +88,12 @@ func (c *Context) ProfileHandler() {
 			return
 		}
 
+		err = database.DB.QueryRowContext(ctx, "SELECT balance FROM wallets WHERE user_uuid = ?", userUUID).Scan(&u.Balance)
+		if err != nil {
+			c.Error("Ошибка получения баланса пользователя", http.StatusInternalServerError)
+			return
+		}
+
 		if err := profileTmpl.Execute(c.W, u); err != nil {
 			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 		}
