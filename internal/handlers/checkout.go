@@ -15,11 +15,13 @@ func (c *Context) CheckoutHandler() {
 	case "POST":
 		if err := cartTmpl.Execute(c.W, data); err != nil {
 			c.Error("Ошибка отображения")
+			return
 		}
 
 		userUUID, err := c.getUserUUIDFromSession()
 		if err != nil {
 			c.Redirect("/login")
+			return
 		}
 
 		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
@@ -64,10 +66,37 @@ func (c *Context) CheckoutHandler() {
 		}
 		defer rows.Close()
 
-		c.Redirect("/cart")
+		var balance int
+		balance, err = tx.QueryRowContext(ctx, "SELECT balance FROM wallets WHERE user_uuid = ?", userUUID).Scan(&balance)
+		if err != nil {
+			c.Error("Ошибка проверки баланса", http.StatusInternalServerError)
+		}
+
+		if balance <= int(totalPrice) {
+			c.Error("На балансе нет достаточно средств", http.StatusBadRequest)
+			return
+		}
+
+		_, err = tx.ExecContext(ctx, "UPDATE wallets SET balance = balance - ? WHERE user_uuid = ?", totalPrice, userUUID)
+		if err != nil {
+			c.Error("Ошибка считывания денежных средств", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = tx.ExecContext(ctx, "DELETE FROM FROM cart WHERE user_uuid = ?", userUUID)
+		if err != nil {
+			c.Error("Ошибка при удалении товарар из корзины", http.StatusInternalServerError)
+			return
+		}
+
+		if err = tx.Commit(); err != nil {
+			c.Error("Ошибка коммита", http.StatusInternalServerError)
+			return
+		}
 
 	default:
 		c.Error("Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 
 }
