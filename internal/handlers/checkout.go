@@ -13,10 +13,6 @@ import (
 func (c *Context) CheckoutHandler() {
 	switch c.R.Method {
 	case "POST":
-		if err := cartTmpl.Execute(c.W, data); err != nil {
-			c.Error("Ошибка отображения")
-			return
-		}
 
 		userUUID, err := c.getUserUUIDFromSession()
 		if err != nil {
@@ -46,6 +42,7 @@ func (c *Context) CheckoutHandler() {
 		}
 
 		var totalPrice float64
+		defer rows.Close()
 		for rows.Next() {
 			var quantity int
 			var price float64
@@ -64,15 +61,15 @@ func (c *Context) CheckoutHandler() {
 				return
 			}
 		}
-		defer rows.Close()
 
 		var balance int
-		balance, err = tx.QueryRowContext(ctx, "SELECT balance FROM wallets WHERE user_uuid = ?", userUUID).Scan(&balance)
+		err = tx.QueryRowContext(ctx, "SELECT balance FROM wallets WHERE user_uuid = ?", userUUID).Scan(&balance)
 		if err != nil {
 			c.Error("Ошибка проверки баланса", http.StatusInternalServerError)
+			return
 		}
 
-		if balance <= int(totalPrice) {
+		if balance < int(totalPrice) {
 			c.Error("На балансе нет достаточно средств", http.StatusBadRequest)
 			return
 		}
@@ -83,9 +80,9 @@ func (c *Context) CheckoutHandler() {
 			return
 		}
 
-		_, err = tx.ExecContext(ctx, "DELETE FROM FROM cart WHERE user_uuid = ?", userUUID)
+		_, err = tx.ExecContext(ctx, "DELETE FROM cart WHERE user_uuid = ?", userUUID)
 		if err != nil {
-			c.Error("Ошибка при удалении товарар из корзины", http.StatusInternalServerError)
+			c.Error("Ошибка при удалении товара из корзины", http.StatusInternalServerError)
 			return
 		}
 
@@ -94,9 +91,14 @@ func (c *Context) CheckoutHandler() {
 			return
 		}
 
+	case "GET":
+		if err := cartTmpl.Execute(c.W, nil); err != nil {
+			c.Error("Ошибка отображения")
+			return
+		}
+
 	default:
 		c.Error("Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
 }
