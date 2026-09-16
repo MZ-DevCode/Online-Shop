@@ -78,6 +78,7 @@ func InitDB() {
 	CREATE TABLE IF NOT EXISTS sessions(
 		token TEXT PRIMARY KEY,
 		user_uuid TEXT NOT NULL,
+		expires_at DATATIME NOT NULL,
 		FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 	);`
 
@@ -85,4 +86,18 @@ func InitDB() {
 	if err != nil {
 		log.Printf("Ошибка создания таблицы sessions: %v", err)
 	}
+
+	createWalletTable := `
+	CREATE TABLE IF NOT EXISTS wallets(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_uuid TEXT NOT NULL UNIQUE,
+		balance INT NOT NULL DEFAULT 1000,
+		FOREIGN KEY (user_uuid) REFERENCES users(uuid)
+	);`
+
+	_, err = DB.Exec(createWalletTable)
+	if err != nil {
+		log.Printf("Ошибка создания таблицы sessions: %v", err)
+	}
+
 }

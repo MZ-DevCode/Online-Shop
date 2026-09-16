@@ -89,6 +89,11 @@ func (c *Context) RegisterHandler() {
 			c.Error("Пользователь уже существует или ошибка базы", http.StatusBadRequest)
 			return
 		}
+		_, err = tx.ExecContext(ctx, "INSERT INTO wallets (user_uuid, balance) VALUES (?, 1000)", u.UUID)
+		if err != nil {
+			c.Error("Ошибка создания кошелька", http.StatusInternalServerError)
+			return
+		}
 
 		sessionToken := utils.GenerateUUID()
 		expiresAt := time.Now().Add(7 * 24 * time.Hour)

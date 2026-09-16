@@ -5,5 +5,6 @@ type User struct {
 	UUID     string `db:"uuid"`
 	Username string `db:"username"`
 	Name     string `db:"name"`
+	Balance  string `db:"balance"`
 	Password string `db:"password"`
 }
