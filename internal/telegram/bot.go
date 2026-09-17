@@ -27,12 +27,20 @@ func StartBot(token string) {
 		}
 
 		var text string
+		chatId := update.Message.Chat.ID
 
-		if update.Message.Text == "/start" {
+		switch update.Message.Text {
+		case "/start":
 			text = "Добро пожаловать в телеграм бота Online-Shop. Для помощи используйте /help"
+		case "/help":
+			text = `Доступные команды:\n
+				/start - Начать работу\n
+				/catalog - Каталог товаров"`
+		default:
+			text = "Такой команды нет. Используйте /help"
 		}
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
+		msg := tgbotapi.NewMessage(chatId, text)
 
 		_, err := bot.Send(msg)
 		if err != nil {
