@@ -1,7 +1,11 @@
 package telegram
 
 import (
+	"WEBSITE/internal/database"
+	"context"
+	"fmt"
 	"log"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -36,11 +40,42 @@ func StartBot(token string) {
 			text = `Доступные команды:\n
 				/start - Начать работу\n
 				/catalog - Каталог товаров"`
+		case "/catalog":
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			rows, err := database.DB.QueryContext(ctx, "SELECT id, name, price, stock FROM products")
+			if err != nil {
+				log.Println("Ошибка получения товаров из БД для бота: ", err)
+				text = "Не удалось загрузить каталог"
+				break
+			}
+
+			text = "Каталог товаров:\n"
+
+			for rows.Next() {
+				var (
+					id    int
+					name  string
+					price float64
+					stock int
+				)
+
+				if err := rows.Scan(&id, &name, &price, &stock); err != nil {
+					log.Println("Ошибка чтения товара: ", err)
+					break
+				}
+
+				text += fmt.Sprintf("🔹 <b>%s</b>\n Цена: <code>%.2f</code> \n В наличии: %d шт.\n", name, price, stock)
+			}
+			rows.Close()
+
 		default:
 			text = "Такой команды нет. Используйте /help"
 		}
 
 		msg := tgbotapi.NewMessage(chatId, text)
+		msg.ParseMode = "HTML"
 
 		_, err := bot.Send(msg)
 		if err != nil {
