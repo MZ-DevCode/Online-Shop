@@ -26,6 +26,8 @@ func StartBot(token string) {
 			continue
 		}
 
+		var text string
+
 		if update.Message.Text == "/start" {
 			text = "Добро пожаловать в телеграм бота Online-Shop. Для помощи используйте /help"
 		}
