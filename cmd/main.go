@@ -4,10 +4,13 @@ import (
 	_ "WEBSITE/docs"
 	"WEBSITE/internal/database"
 	"WEBSITE/internal/handlers"
+	"WEBSITE/internal/telegram"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
@@ -19,6 +22,15 @@ import (
 
 func main() {
 	database.InitDB()
+	if err := godotenv.Load(); err != nil {
+		log.Println("Ошибка: ", err)
+	}
+
+	tg_token := os.Getenv("TELEGRAM_BOT_TOKEN")
+	if tg_token == "" {
+		log.Fatal("Ошибка: TELEGRAM_BOT_TOKEN не задан в .env файле")
+	}
+	go telegram.StartBot(tg_token)
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("static"))
