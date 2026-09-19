@@ -34,7 +34,8 @@ func InitDB() {
 			uuid TEXT UNIQUE NOT NULL,
 			name TEXT NOT NULL,
 			username TEXT UNIQUE NOT NULL,
-			password TEXT NOT NULL
+			password TEXT NOT NULL,
+			telegram_id INTEGER DEFAULT 0
 		);`
 
 	_, err = DB.Exec(createTableQuery)

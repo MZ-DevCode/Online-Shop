@@ -33,13 +33,28 @@ func StartBot(token string) {
 		var text string
 		chatId := update.Message.Chat.ID
 
-		switch update.Message.Text {
-		case "/start":
+		switch update.Message.Command() {
+		case "start":
+			args := update.Message.CommandArguments()
+			if args != "" {
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+				defer cancel()
+
+				_, err := database.DB.ExecContext(ctx, "UPDATE users SET telegram_id = ? WHERE uuid = ?", chatID, args)
+				if err != nil {
+					log.Println("Ошибка при привязке аккаунта: ", err)
+					text = "Ошибка при привязке аккаунта"
+				}
+				text = "Добро пожаловать в телеграм бота Online-Shop. Для помощи используйте /help"
+			}
 			text = "Добро пожаловать в телеграм бота Online-Shop. Для помощи используйте /help"
+
 		case "/help":
 			text = `Доступные команды:\n
 				/start - Начать работу\n
-				/catalog - Каталог товаров"`
+				/catalog - Каталог товаров"
+				/balance - Проверить баланс кошелька`
+
 		case "/catalog":
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
@@ -74,10 +89,13 @@ func StartBot(token string) {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 
-			balance, err := database.DB.QueryContext(ctx, "SELECT balance FROM wallets WHERE id = ?")
+			var balance int
+
+			query := `SELECT w.balance FROM wallets w JOIN users u ON w.user_uuid = u.uuid WHERE u.telegram_id = ?`
+			err := database.DB.QueryRowContext(ctx, query, chatId).Scan(&balance)
 			if err != nil {
 				log.Println("Ошибка получения баланса: ", err)
-				text = "Привяжите свой аккаунт сайта в личном кабинете"
+				text = "Аккаунт не привязан к сайту, привяжите его в личном кабинете"
 				break
 			}
 
