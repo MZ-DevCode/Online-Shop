@@ -70,6 +70,18 @@ func StartBot(token string) {
 			}
 			rows.Close()
 
+		case "/balance":
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			balance, err := database.DB.QueryContext(ctx, "SELECT balance FROM wallets WHERE id = ?")
+			if err != nil {
+				log.Println("Ошибка получения баланса: ", err)
+				text = "Привяжите свой аккаунт сайта в личном кабинете"
+				break
+			}
+
+			text = fmt.Sprintf("Ваш баланс: <b>%d</b>", balance)
 		default:
 			text = "Такой команды нет. Используйте /help"
 		}
