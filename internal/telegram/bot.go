@@ -33,6 +33,7 @@ func StartBot(token string) {
 		var text string
 		chatId := update.Message.Chat.ID
 
+		// Command() возвращает текст БЕЗ слеша ("start", "help", "catalog", "balance")
 		switch update.Message.Command() {
 		case "start":
 			args := update.Message.CommandArguments()
@@ -40,22 +41,24 @@ func StartBot(token string) {
 				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 				defer cancel()
 
-				_, err := database.DB.ExecContext(ctx, "UPDATE users SET telegram_id = ? WHERE uuid = ?", chatID, args)
+				_, err := database.DB.ExecContext(ctx, "UPDATE users SET telegram_id = ? WHERE uuid = ?", chatId, args)
 				if err != nil {
 					log.Println("Ошибка при привязке аккаунта: ", err)
-					text = "Ошибка при привязке аккаунта"
+					text = "❌ Ошибка при привязке аккаунта."
+				} else {
+					text = "🎉 Аккаунт успешно привязан! Теперь вам доступна команда /balance"
 				}
+			} else {
 				text = "Добро пожаловать в телеграм бота Online-Shop. Для помощи используйте /help"
 			}
-			text = "Добро пожаловать в телеграм бота Online-Shop. Для помощи используйте /help"
 
-		case "/help":
-			text = `Доступные команды:\n
-				/start - Начать работу\n
-				/catalog - Каталог товаров"
-				/balance - Проверить баланс кошелька`
+		case "help":
+			text = "Доступные команды:\n" +
+				"/start - Начать работу\n" +
+				"/catalog - Каталог товаров\n" +
+				"/balance - Проверить баланс кошелька"
 
-		case "/catalog":
+		case "catalog":
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 
@@ -85,7 +88,7 @@ func StartBot(token string) {
 			}
 			rows.Close()
 
-		case "/balance":
+		case "balance":
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 
@@ -100,6 +103,7 @@ func StartBot(token string) {
 			}
 
 			text = fmt.Sprintf("Ваш баланс: <b>%d</b>", balance)
+
 		default:
 			text = "Такой команды нет. Используйте /help"
 		}
