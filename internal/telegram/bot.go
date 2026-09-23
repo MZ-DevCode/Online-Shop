@@ -114,6 +114,24 @@ func StartBot(token string) {
 
 			text = fmt.Sprintf("Ваш баланс: <b>%d</b>", balance)
 
+		case "profile":
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			var (
+				name     string
+				username string
+			)
+
+			query := `SELECT name, username FROM users WHERE telegram_id = ?`
+			err := database.DB.QueryRowContext(ctx, query, chatId).Scan(&name, &username)
+			if err != nil {
+				log.Println("Ошибка получения профиля: ", err)
+				text = "Аккаунт не привязан к сайту, привяжите его в личном кабинете"
+				break
+			}
+			text = fmt.Sprintf("<b>Ваш профиль:</b>\nИмя: <b>%s</b>\nЛогин: <code>%s</code>", name, username)
+
 		default:
 			text = "Такой команды нет. Используйте /help"
 		}
