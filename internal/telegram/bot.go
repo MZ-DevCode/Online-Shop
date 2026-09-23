@@ -20,6 +20,16 @@ func StartBot(token string) {
 	bot.Debug = true
 	log.Printf("Бот запущен")
 
+	_, err = bot.Request(tgbotapi.NewSetMyCommands(
+		tgbotapi.BotCommand{Command: "start", Description: "Запустить бота"},
+		tgbotapi.BotCommand{Command: "catalog", Description: "Каталог товаров"},
+		tgbotapi.BotCommand{Command: "balance", Description: "Баланс кошелька"},
+		tgbotapi.BotCommand{Command: "help", Description: "Помощь"},
+	))
+	if err != nil {
+		log.Println("Не удалось установить команды:", err)
+	}
+
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -33,14 +43,32 @@ func StartBot(token string) {
 		var text string
 		chatId := update.Message.Chat.ID
 
-		switch update.Message.Text {
-		case "/start":
-			text = "Добро пожаловать в телеграм бота Online-Shop. Для помощи используйте /help"
-		case "/help":
-			text = `Доступные команды:\n
-				/start - Начать работу\n
-				/catalog - Каталог товаров"`
-		case "/catalog":
+		switch update.Message.Command() {
+		case "start":
+			args := update.Message.CommandArguments()
+			if args != "" {
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+				defer cancel()
+
+				_, err := database.DB.ExecContext(ctx, "UPDATE users SET telegram_id = ? WHERE uuid = ?", chatId, args)
+				if err != nil {
+					log.Println("Ошибка при привязке аккаунта: ", err)
+					text = "Ошибка при привязке аккаунта."
+				} else {
+					text = "🎉 Аккаунт успешно привязан! Теперь вам доступна команда /balance"
+				}
+			} else {
+				text = "Добро пожаловать в телеграм бота Online-Shop. Для помощи используйте /help"
+			}
+
+		case "help":
+			text = "Доступные команды:\n" +
+				"/start - Начать работу\n" +
+				"/catalog - Каталог товаров\n" +
+				"/balance - Проверить баланс кошелька\n" +
+				"/profile - Посмотреть информацию профиля"
+
+		case "catalog":
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 
@@ -69,6 +97,40 @@ func StartBot(token string) {
 				text += fmt.Sprintf("🔹 <b>%s</b>\n Цена: <code>%.2f</code> \n В наличии: %d шт.\n", name, price, stock)
 			}
 			rows.Close()
+
+		case "balance":
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			var balance int
+
+			query := `SELECT w.balance FROM wallets w JOIN users u ON w.user_uuid = u.uuid WHERE u.telegram_id = ?`
+			err := database.DB.QueryRowContext(ctx, query, chatId).Scan(&balance)
+			if err != nil {
+				log.Println("Ошибка получения баланса: ", err)
+				text = "Аккаунт не привязан к сайту, привяжите его в личном кабинете"
+				break
+			}
+
+			text = fmt.Sprintf("Ваш баланс: <b>%d</b>", balance)
+
+		case "profile":
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			var (
+				name     string
+				username string
+			)
+
+			query := `SELECT name, username FROM users WHERE telegram_id = ?`
+			err := database.DB.QueryRowContext(ctx, query, chatId).Scan(&name, &username)
+			if err != nil {
+				log.Println("Ошибка получения профиля: ", err)
+				text = "Аккаунт не привязан к сайту, привяжите его в личном кабинете"
+				break
+			}
+			text = fmt.Sprintf("<b>Ваш профиль:</b>\nИмя: <b>%s</b>\nЛогин: <code>%s</code>", name, username)
 
 		default:
 			text = "Такой команды нет. Используйте /help"
