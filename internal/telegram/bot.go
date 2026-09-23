@@ -20,6 +20,16 @@ func StartBot(token string) {
 	bot.Debug = true
 	log.Printf("Бот запущен")
 
+	_, err = bot.Request(tgbotapi.NewSetMyCommands(
+		tgbotapi.BotCommand{Command: "start", Description: "Запустить бота"},
+		tgbotapi.BotCommand{Command: "catalog", Description: "Каталог товаров"},
+		tgbotapi.BotCommand{Command: "balance", Description: "Баланс кошелька"},
+		tgbotapi.BotCommand{Command: "help", Description: "Помощь"},
+	))
+	if err != nil {
+		log.Println("Не удалось установить команды:", err)
+	}
+
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -33,7 +43,6 @@ func StartBot(token string) {
 		var text string
 		chatId := update.Message.Chat.ID
 
-		// Command() возвращает текст БЕЗ слеша ("start", "help", "catalog", "balance")
 		switch update.Message.Command() {
 		case "start":
 			args := update.Message.CommandArguments()
@@ -56,7 +65,7 @@ func StartBot(token string) {
 			text = "Доступные команды:\n" +
 				"/start - Начать работу\n" +
 				"/catalog - Каталог товаров\n" +
-				"/balance - Проверить баланс кошелька" +
+				"/balance - Проверить баланс кошелька\n" +
 				"/profile - Посмотреть информацию профиля"
 
 		case "catalog":
