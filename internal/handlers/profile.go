@@ -82,7 +82,7 @@ func (c *Context) ProfileHandler() {
 		defer cancel()
 
 		var u models.User
-		err = database.DB.QueryRowContext(ctx, "SELECT name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.Name, &u.Username)
+		err = database.DB.QueryRowContext(ctx, "SELECT uuid, name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.UUID, &u.Name, &u.Username)
 		if err != nil {
 			c.Error("Ошибка получения данных пользователя", http.StatusInternalServerError)
 			return
