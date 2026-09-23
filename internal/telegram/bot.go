@@ -44,7 +44,7 @@ func StartBot(token string) {
 				_, err := database.DB.ExecContext(ctx, "UPDATE users SET telegram_id = ? WHERE uuid = ?", chatId, args)
 				if err != nil {
 					log.Println("Ошибка при привязке аккаунта: ", err)
-					text = "❌ Ошибка при привязке аккаунта."
+					text = "Ошибка при привязке аккаунта."
 				} else {
 					text = "🎉 Аккаунт успешно привязан! Теперь вам доступна команда /balance"
 				}
@@ -56,7 +56,8 @@ func StartBot(token string) {
 			text = "Доступные команды:\n" +
 				"/start - Начать работу\n" +
 				"/catalog - Каталог товаров\n" +
-				"/balance - Проверить баланс кошелька"
+				"/balance - Проверить баланс кошелька" +
+				"/profile - Посмотреть информацию профиля"
 
 		case "catalog":
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
