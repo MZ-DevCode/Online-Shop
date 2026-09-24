@@ -37,6 +37,9 @@ func main() {
 	fileServer := http.FileServer(http.Dir("static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 
+	fs := http.FileServer(http.Dir("./uploads"))
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", fs))
+
 	mux.HandleFunc("/register", handlers.MakeHandler((*handlers.Context).RegisterHandler))
 	mux.HandleFunc("/login", handlers.MakeHandler((*handlers.Context).LoginHandler))
 	mux.HandleFunc("/", handlers.MakeHandler((*handlers.Context).CatalogHandler))

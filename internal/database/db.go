@@ -52,6 +52,7 @@ func InitDB() {
 		price REAL NOT NULL,
 		stock INTEGER NOT NULL,
 		description TEXT NOT NULL,
+		image_url TEXT,
 		FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 	);`
 

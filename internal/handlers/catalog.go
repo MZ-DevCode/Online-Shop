@@ -41,7 +41,7 @@ func (c *Context) CatalogHandler() {
 		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
 		defer cancel()
 
-		rows, err := database.DB.QueryContext(ctx, "SELECT id, name, price, stock FROM products")
+		rows, err := database.DB.QueryContext(ctx, "SELECT id, name, price, stock, image_url FROM products")
 		if err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
@@ -52,11 +52,19 @@ func (c *Context) CatalogHandler() {
 
 		for rows.Next() {
 			var p models.Product
-			err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
+			var imageURL sql.NullString
+			err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &imageURL)
 			if err != nil {
 				c.Error(err.Error(), http.StatusInternalServerError)
 				return
 			}
+
+			if imageURL.Valid {
+				p.ImageURL = imageURL.String
+			} else {
+				p.ImageURL = ""
+			}
+
 			products = append(products, p)
 		}
 
