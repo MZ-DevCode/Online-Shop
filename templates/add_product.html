@@ -21,7 +21,7 @@
         <div class="container" style="max-width: 480px;">
             <h2>Добавление товара</h2>
 
-            <form action="/profile/product/add" method="POST">
+            <form action="/profile/product/add" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Название товара</label>
                     <input type="text" name="name" placeholder="Введите название" required>
@@ -40,6 +40,11 @@
                 <div class="form-group">
                     <label>Количество на складе</label>
                     <input type="number" name="stock" placeholder="0" required>
+                </div>
+
+                <div class="form-group">
+                     <label>Изображение товара</label>
+                     <input type="file" name="image" accept="image/*" required>
                 </div>
 
                 <button type="submit">Добавить товар</button>
