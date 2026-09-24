@@ -21,10 +21,11 @@ import (
 // @BasePath /
 
 func main() {
-	database.InitDB()
+	log.Println("Start")
 	if err := godotenv.Load(); err != nil {
 		log.Println("Ошибка: ", err)
 	}
+	database.InitDB()
 
 	tg_token := os.Getenv("TELEGRAM_BOT_TOKEN")
 	if tg_token == "" {
