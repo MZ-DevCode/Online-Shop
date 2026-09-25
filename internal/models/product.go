@@ -21,4 +21,10 @@ type CartItem struct {
 type CartPageData struct {
 	Items      []CartItem `json:"items"`
 	TotalPrice float64    `json:"total_price"`
+	CartCount  int        `json:"cart_count"`
+}
+
+type CatalogPageData struct {
+	Products  []Product `json:"products"`
+	CartCount int       `json:"cart_count"`
 }

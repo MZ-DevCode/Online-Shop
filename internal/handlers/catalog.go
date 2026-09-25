@@ -73,7 +73,18 @@ func (c *Context) CatalogHandler() {
 			return
 		}
 
-		if err := catalogTmpl.Execute(c.W, products); err != nil {
+		var cartCount int
+		userUUID, err := c.getUserUUIDFromSession()
+		if err == nil {
+			_ = database.DB.QueryRowContext(ctx, "SELECT COALESCE(SUM(quantity), 0) FROM cart WHERE user_uuid = ?", userUUID).Scan(&cartCount)
+		}
+
+		pageData := models.CatalogPageData{
+			Products:  products,
+			CartCount: cartCount,
+		}
+
+		if err := catalogTmpl.Execute(c.W, pageData); err != nil {
 			c.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
