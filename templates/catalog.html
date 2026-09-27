@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Каталог товаров | StoreGo</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/js/script.js" defer></script>
 </head>
 <body>
     <header class="navbar">
@@ -12,7 +13,7 @@
         <nav class="nav-links">
             <a href="/profile">Профиль</a>
             <a href="/catalog" class="active">Каталог</a>
-            <a href="/cart">Корзина</a>
+            <a href="/cart">Корзина ({{ .CartCount}})</a>
             <a href="/logout" class="logout-btn">Выйти</a>
         </nav>
     </header>
@@ -20,7 +21,7 @@
         <h1>Каталог товаров</h1>
 
         <div class="products-grid">
-            {{range .}}
+            {{range .Products}}
             <div class="product-card">
                 {{if .ImageURL}}
                             <img src="{{.ImageURL}}" alt="{{.Name}}" style="width: 100%; height: 160px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">

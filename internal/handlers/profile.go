@@ -81,18 +81,53 @@ func (c *Context) ProfileHandler() {
 		ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
 		defer cancel()
 
-		var u models.User
-		err = database.DB.QueryRowContext(ctx, "SELECT uuid, name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.UUID, &u.Name, &u.Username)
-		if err != nil {
+		type userResult struct {
+			user models.User
+			err  error
+		}
+
+		type balanceResult struct {
+			balance float64
+			err     error
+		}
+
+		userChan := make(chan userResult, 1)
+		balanceChan := make(chan balanceResult, 1)
+
+		go func() {
+			var u models.User
+			err := database.DB.QueryRowContext(ctx, "SELECT uuid, name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.UUID, &u.Name, &u.Username)
+			userChan <- userResult{
+				user: u,
+				err:  err,
+			}
+
+		}()
+
+		go func() {
+			var balance float64
+			err := database.DB.QueryRowContext(ctx, "SELECT balance FROM wallets WHERE user_uuid = ?", userUUID).Scan(&balance)
+			balanceChan <- balanceResult{
+				balance: balance,
+				err:     err,
+			}
+
+		}()
+
+		uRes := <-userChan
+		if uRes.err != nil {
 			c.Error("Ошибка получения данных пользователя", http.StatusInternalServerError)
 			return
 		}
 
-		err = database.DB.QueryRowContext(ctx, "SELECT balance FROM wallets WHERE user_uuid = ?", userUUID).Scan(&u.Balance)
-		if err != nil {
+		bRes := <-balanceChan
+		if bRes.err != nil {
 			c.Error("Ошибка получения баланса пользователя", http.StatusInternalServerError)
 			return
 		}
+
+		u := uRes.user
+		u.Balance = bRes.balance
 
 		if err := profileTmpl.Execute(c.W, u); err != nil {
 			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
