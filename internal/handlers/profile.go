@@ -94,6 +94,9 @@ func (c *Context) ProfileHandler() {
 		userChan := make(chan userResult, 1)
 		balanceChan := make(chan balanceResult, 1)
 
+		var cartCount int
+		_ = database.DB.QueryRowContext(ctx, "SELECT COALESCE(SUM(quantity), 0) FROM cart WHERE user_uuid = ?", userUUID).Scan(&cartCount)
+
 		go func() {
 			var u models.User
 			err := database.DB.QueryRowContext(ctx, "SELECT uuid, name, username FROM users WHERE uuid = ?", userUUID).Scan(&u.UUID, &u.Name, &u.Username)
@@ -129,7 +132,12 @@ func (c *Context) ProfileHandler() {
 		u := uRes.user
 		u.Balance = bRes.balance
 
-		if err := profileTmpl.Execute(c.W, u); err != nil {
+		profile := models.Profile{
+			User:      u,
+			CartCount: cartCount,
+		}
+
+		if err := profileTmpl.Execute(c.W, profile); err != nil {
 			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
 		}
 
