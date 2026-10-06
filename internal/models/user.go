@@ -8,3 +8,8 @@ type User struct {
 	Balance  float64 `db:"balance"`
 	Password string  `db:"password"`
 }
+
+type Profile struct {
+	User
+	CartCount int `json:"cart_count"`
+}

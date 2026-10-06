@@ -21,8 +21,26 @@ var (
 func (c *Context) CreateProductHandler() {
 	switch c.R.Method {
 	case "GET":
-		if err := addProductTmpl.Execute(c.W, nil); err != nil {
+		userUUID, err := c.getUserUUIDFromSession()
+		var cartCount int
+		if err != nil {
+			c.Redirect("/login")
+		} else {
+			ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
+			defer cancel()
+			_ = database.DB.QueryRowContext(ctx, "SELECT COALESCE(SUM(quantity), 0) FROM cart WHERE user_uuid = ?", userUUID).Scan(&cartCount)
+		}
+
+		pageData := struct {
+			CartCount int
+		}{
+			CartCount: cartCount,
+		}
+
+		if err := addProductTmpl.Execute(c.W, pageData); err != nil {
+			log.Printf("Ошибка загрузки шаблона add_product.html: %v", err)
 			c.Error("Ошибка загрузки шаблона", http.StatusInternalServerError)
+			return
 		}
 
 	case "POST":
