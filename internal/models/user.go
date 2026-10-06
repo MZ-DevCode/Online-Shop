@@ -10,6 +10,6 @@ type User struct {
 }
 
 type Profile struct {
-	User      User
+	User
 	CartCount int `json:"cart_count"`
 }
