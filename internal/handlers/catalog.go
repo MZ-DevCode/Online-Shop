@@ -178,21 +178,23 @@ func (c *Context) ShowCart() {
 	ctx, cancel := context.WithTimeout(c.Ctx, 3*time.Second)
 	defer cancel()
 
+	if err != nil {
+		c.Error(err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var items []models.CartItem
+	var totalPrice float64
+	var cartCount int
+	_ = database.DB.QueryRowContext(ctx, "SELECT COALESCE(SUM(quantity), 0) FROM cart WHERE user_uuid = ?", userUUID).Scan(&cartCount)
+
 	rows, err := database.DB.QueryContext(ctx, `
 		SELECT p.id, p.name, p.price, p.stock, c_alias.quantity
 		FROM cart c_alias
 		JOIN products p ON c_alias.product_id = p.id
 		WHERE c_alias.user_uuid = ?
 		`, userUUID)
-
-	if err != nil {
-		c.Error(err.Error(), http.StatusInternalServerError)
-		return
-	}
 	defer rows.Close()
-
-	var items []models.CartItem
-	var totalPrice float64
 
 	for rows.Next() {
 		var p models.Product
@@ -220,6 +222,7 @@ func (c *Context) ShowCart() {
 	pageData := models.CartPageData{
 		Items:      items,
 		TotalPrice: totalPrice,
+		CartCount:  cartCount,
 	}
 
 	if err := cartTmpl.Execute(c.W, pageData); err != nil {
