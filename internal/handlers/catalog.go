@@ -194,6 +194,7 @@ func (c *Context) ShowCart() {
 		JOIN products p ON c_alias.product_id = p.id
 		WHERE c_alias.user_uuid = ?
 		`, userUUID)
+
 	defer rows.Close()
 
 	for rows.Next() {
